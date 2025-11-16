@@ -1,158 +1,183 @@
-import React from 'react';
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
-} from '@/components/ui/sidebar';
+    Home,
+    Package,
+    Tag,
+    MessageSquare,
+    TrendingUp,
+    ShoppingCart,
+    Store,
+    ChevronDown,
+    Settings,
+    User,
+} from "lucide-react";
 import {
-  Home,
-  Inbox,
-  Calendar,
-  Search,
-  Settings,
-  User,
-  FileText,
-  BarChart,
-  MessageSquare,
-  ChevronDown,
-} from 'lucide-react';
+    Sidebar,
+    SidebarHeader,
+    SidebarMenu,
+    SidebarMenuItem,
+    SidebarMenuButton,
+    SidebarContent,
+    SidebarGroup,
+    SidebarFooter,
+    SidebarGroupContent,
+    SidebarGroupLabel,
+    SidebarMenuBadge,
+} from "../ui/sidebar";
+import {
+    DropdownMenu,
+    DropdownMenuTrigger,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+} from "../ui/dropdown-menu";
+import type React from "react";
 
-export default function SidebarExample() {
-  const [activeItem, setActiveItem] = React.useState('home');
+type Props = {
+    activeItem: string;
+    setActiveItem: React.Dispatch<React.SetStateAction<string>>;
+};
 
-  return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full">
-        <Sidebar collapsible='none'>
-          <SidebarContent>
-            <SidebarGroup>
-              <SidebarGroupLabel>Navegación Principal</SidebarGroupLabel>
-              <SidebarGroupContent>
+const AppSidebar = ({ activeItem, setActiveItem }: Props) => {
+    const mainMenu = [
+        { id: "home", label: "Inicio", icon: Home },
+        { id: "productos", label: "Productos", icon: Package, badge: 124 },
+        { id: "ofertas", label: "Ofertas", icon: Tag },
+        { id: "mensajes", label: "Mensajes", icon: MessageSquare, badge: 3 },
+    ];
+
+    const secondaryMenu = [
+        { id: "trending", label: "Tendencias", icon: TrendingUp },
+        { id: "carrito", label: "Mi Carrito", icon: ShoppingCart },
+        { id: "tienda", label: "Mi Tienda", icon: Store },
+    ];
+
+    return (
+        <Sidebar collapsible="icon">
+            <SidebarHeader className="border-b">
                 <SidebarMenu>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      isActive={activeItem === 'home'}
-                      onClick={() => setActiveItem('home')}
-                    >
-                      <Home className="h-4 w-4" />
-                      <span>Inicio</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      isActive={activeItem === 'inbox'}
-                      onClick={() => setActiveItem('inbox')}
-                    >
-                      <Inbox className="h-4 w-4" />
-                      <span>Bandeja de entrada</span>
-                      <span className="ml-auto text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
-                        3
-                      </span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      isActive={activeItem === 'calendar'}
-                      onClick={() => setActiveItem('calendar')}
-                    >
-                      <Calendar className="h-4 w-4" />
-                      <span>Calendario</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      isActive={activeItem === 'search'}
-                      onClick={() => setActiveItem('search')}
-                    >
-                      <Search className="h-4 w-4" />
-                      <span>Buscar</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton size="lg" asChild>
+                            <a href="#">
+                                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                                    <Store className="size-4" />
+                                </div>
+                                <div className="flex flex-col gap-0.5 leading-none">
+                                    <span className="font-semibold">
+                                        Marketplace
+                                    </span>
+                                    <span className="text-xs text-muted-foreground">
+                                        Pro
+                                    </span>
+                                </div>
+                            </a>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
                 </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
+            </SidebarHeader>
 
-            <SidebarGroup>
-              <SidebarGroupLabel>Contenido</SidebarGroupLabel>
-              <SidebarGroupContent>
+            <SidebarContent>
+                <SidebarGroup>
+                    <SidebarGroupLabel>Menú Principal</SidebarGroupLabel>
+                    <SidebarGroupContent>
+                        <SidebarMenu>
+                            {mainMenu.map((item) => {
+                                const Icon = item.icon;
+                                return (
+                                    <SidebarMenuItem key={item.id}>
+                                        <SidebarMenuButton
+                                            isActive={activeItem === item.id}
+                                            onClick={() =>
+                                                setActiveItem(item.id)
+                                            }
+                                            tooltip={item.label}
+                                        >
+                                            <Icon />
+                                            <span>{item.label}</span>
+                                            {item.badge && (
+                                                <SidebarMenuBadge>
+                                                    {item.badge}
+                                                </SidebarMenuBadge>
+                                            )}
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                );
+                            })}
+                        </SidebarMenu>
+                    </SidebarGroupContent>
+                </SidebarGroup>
+
+                <SidebarGroup>
+                    <SidebarGroupLabel>Descubrir</SidebarGroupLabel>
+                    <SidebarGroupContent>
+                        <SidebarMenu>
+                            {secondaryMenu.map((item) => {
+                                const Icon = item.icon;
+                                return (
+                                    <SidebarMenuItem key={item.id}>
+                                        <SidebarMenuButton
+                                            isActive={activeItem === item.id}
+                                            onClick={() =>
+                                                setActiveItem(item.id)
+                                            }
+                                            tooltip={item.label}
+                                        >
+                                            <Icon />
+                                            <span>{item.label}</span>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                );
+                            })}
+                        </SidebarMenu>
+                    </SidebarGroupContent>
+                </SidebarGroup>
+            </SidebarContent>
+
+            <SidebarFooter className="border-t">
                 <SidebarMenu>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      isActive={activeItem === 'documents'}
-                      onClick={() => setActiveItem('documents')}
-                    >
-                      <FileText className="h-4 w-4" />
-                      <span>Documentos</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      isActive={activeItem === 'analytics'}
-                      onClick={() => setActiveItem('analytics')}
-                    >
-                      <BarChart className="h-4 w-4" />
-                      <span>Analíticas</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      isActive={activeItem === 'messages'}
-                      onClick={() => setActiveItem('messages')}
-                    >
-                      <MessageSquare className="h-4 w-4" />
-                      <span>Mensajes</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton
+                            isActive={activeItem === "settings"}
+                            onClick={() => setActiveItem("settings")}
+                            tooltip="Configuración"
+                        >
+                            <Settings />
+                            <span>Configuración</span>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <SidebarMenuButton>
+                                    <User />
+                                    <span className="truncate">
+                                        Usuario Demo
+                                    </span>
+                                    <ChevronDown className="ml-auto" />
+                                </SidebarMenuButton>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                                side="top"
+                                className="w-[--radix-popper-anchor-width]"
+                            >
+                                <DropdownMenuItem>
+                                    <User className="mr-2 h-4 w-4" />
+                                    <span>Perfil</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                    <Settings className="mr-2 h-4 w-4" />
+                                    <span>Configuración</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem>
+                                    <span>Cerrar sesión</span>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </SidebarMenuItem>
                 </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </SidebarContent>
-
-          <SidebarFooter className="border-t">
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  isActive={activeItem === 'settings'}
-                  onClick={() => setActiveItem('settings')}
-                >
-                  <Settings className="h-4 w-4" />
-                  <span>Configuración</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              <SidebarMenuItem>
-                <SidebarMenuButton className="group">
-                  <User className="h-4 w-4" />
-                  <div className="flex flex-col items-start flex-1">
-                    <span className="text-sm font-medium">Usuario Demo</span>
-                    <span className="text-xs text-muted-foreground">demo@ejemplo.com</span>
-                  </div>
-                  <ChevronDown className="h-4 w-4 ml-auto" />
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarFooter>
+            </SidebarFooter>
         </Sidebar>
+    );
+};
 
-        <main className="flex-1 p-6">
-          <div className="mb-4">
-            <SidebarTrigger />
-          </div>
-        </main>
-      </div>
-    </SidebarProvider>
-  );
-}
+export default AppSidebar;
