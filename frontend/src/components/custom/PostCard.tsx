@@ -42,9 +42,7 @@ const PostCard = ({ post }: PostCardProps) => {
                                     {post.user}
                                 </p>
                                 {post.role.includes("Verificado") && (
-                                    <Badge
-                                        className="h-5 text-xs"
-                                    >
+                                    <Badge className="h-5 text-xs">
                                         Verificado
                                     </Badge>
                                 )}
