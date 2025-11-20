@@ -31,6 +31,8 @@ import {
     DropdownMenuSeparator,
 } from "../ui/dropdown-menu";
 import type React from "react";
+import { Link } from "react-router-dom";
+import type { MenuItem } from "@/types/AppTypes";
 
 type Props = {
     activeItem: string;
@@ -38,11 +40,23 @@ type Props = {
 };
 
 const AppSidebar = ({ activeItem, setActiveItem }: Props) => {
-    const mainMenu = [
-        { id: "home", label: "Inicio", icon: Home },
-        { id: "productos", label: "Productos", icon: Package, badge: 124 },
-        { id: "ofertas", label: "Ofertas", icon: Tag },
-        { id: "mensajes", label: "Mensajes", icon: MessageSquare, badge: 3 },
+    const mainMenu: MenuItem[] = [
+        { id: "home", label: "Inicio", icon: Home, to: "/" },
+        {
+            id: "productos",
+            label: "Productos",
+            icon: Package,
+            badge: 124,
+            to: "/profile",
+        },
+        { id: "ofertas", label: "Ofertas", icon: Tag, to: "#" },
+        {
+            id: "mensajes",
+            label: "Mensajes",
+            icon: MessageSquare,
+            badge: 3,
+            to: "#",
+        },
     ];
 
     const secondaryMenu = [
@@ -84,21 +98,25 @@ const AppSidebar = ({ activeItem, setActiveItem }: Props) => {
                                 const Icon = item.icon;
                                 return (
                                     <SidebarMenuItem key={item.id}>
-                                        <SidebarMenuButton
-                                            isActive={activeItem === item.id}
-                                            onClick={() =>
-                                                setActiveItem(item.id)
-                                            }
-                                            tooltip={item.label}
-                                        >
-                                            <Icon />
-                                            <span>{item.label}</span>
-                                            {item.badge && (
-                                                <SidebarMenuBadge>
-                                                    {item.badge}
-                                                </SidebarMenuBadge>
-                                            )}
-                                        </SidebarMenuButton>
+                                        <Link to={item.to}>
+                                            <SidebarMenuButton
+                                                isActive={
+                                                    activeItem === item.id
+                                                }
+                                                onClick={() =>
+                                                    setActiveItem(item.id)
+                                                }
+                                                tooltip={item.label}
+                                            >
+                                                <Icon />
+                                                <span>{item.label}</span>
+                                                {item.badge && (
+                                                    <SidebarMenuBadge>
+                                                        {item.badge}
+                                                    </SidebarMenuBadge>
+                                                )}
+                                            </SidebarMenuButton>
+                                        </Link>
                                     </SidebarMenuItem>
                                 );
                             })}
