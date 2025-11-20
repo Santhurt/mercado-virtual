@@ -2,7 +2,7 @@ import { useState } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Package, FileText, Star } from "lucide-react";
+import { Package, FileText } from "lucide-react";
 import ProductCard from "@/components/custom/ProductCard";
 import UserProfileCard from "@/components/custom/UserProfileCard";
 
@@ -25,15 +25,38 @@ const ProfilePage = () => {
         rating: 4.8,
     };
 
-    const products = Array(6)
-        .fill(null)
-        .map((_, i) => ({
-            id: i + 1,
-            title: `Producto ${i + 1}`,
-            price: "$299",
-            image: null,
-            status: "Disponible",
-        }));
+    const products = [
+        {
+            title: "Zapatillas Running Pro Max",
+            price: "$89.99",
+            status: "Nuevo",
+            discount: "20%",
+            rating: 4.8,
+            tags: ["Deporte", "Unisex", "Trending"],
+        },
+        {
+            title: "Camiseta Deportiva Premium Fit",
+            price: "$34.99",
+            status: "Popular",
+            rating: 4.6,
+            tags: ["Fitness", "Algodón", "Eco"],
+        },
+        {
+            title: "Mochila Urbana Impermeable 30L",
+            price: "$59.99",
+            status: "Oferta",
+            discount: "15%",
+            rating: 4.9,
+            tags: ["Travel", "Laptop", "Resistente"],
+        },
+        {
+            title: "Reloj Inteligente Fitness Pro",
+            price: "$199.99",
+            status: "Destacado",
+            rating: 4.7,
+            tags: ["Tech", "Salud", "GPS"],
+        },
+    ];
 
     return (
         <MainLayout>
@@ -56,13 +79,8 @@ const ProfilePage = () => {
 
                     <TabsContent value="productos" className="mt-6">
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {products.map((product) => (
-                                <ProductCard
-                                    key={product.id}
-                                    title={product.title}
-                                    price={product.price}
-                                    status={product.status}
-                                />
+                            {products.map((product, index) => (
+                                <ProductCard key={index} {...product} />
                             ))}
                         </div>
                     </TabsContent>
