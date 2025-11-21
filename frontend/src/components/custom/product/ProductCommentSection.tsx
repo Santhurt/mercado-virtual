@@ -4,13 +4,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Send } from "lucide-react";
 import CommentItem from "./CommentItem";
+import type { IComment } from "@/types/AppTypes";
 
+type ProductCommentSectionProps = {
+    comments: IComment[];
+    comment: string;
+    setComment: (comment: string) => void;
+    handleAddComment: () => void;
+};
 const ProductCommentSection = ({
     comments,
     comment,
     setComment,
     handleAddComment,
-}) => {
+}: ProductCommentSectionProps) => {
     return (
         <Card>
             <CardHeader>

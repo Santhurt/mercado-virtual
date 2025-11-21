@@ -1,7 +1,11 @@
-import { Truck, Shield, Package } from "lucide-react";
-import React from "react";
+import { Truck, Shield, Package, type LucideIcon } from "lucide-react";
 
-const InfoItem = ({ Icon, title, subtitle }) => (
+type InfoItemProps = {
+    Icon: LucideIcon;
+    title: string;
+    subtitle: string;
+};
+const InfoItem = ({ Icon, title, subtitle }: InfoItemProps) => (
     <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
         <Icon className="h-5 w-5 text-primary" />
         <div className="text-xs">
@@ -11,7 +15,7 @@ const InfoItem = ({ Icon, title, subtitle }) => (
     </div>
 );
 
-const ProductQuickInfo = ({ stock }) => {
+const ProductQuickInfo = ({ stock }: { stock: number }) => {
     return (
         <div className="grid grid-cols-3 gap-3">
             <InfoItem Icon={Truck} title="Envío rápido" subtitle="2-3 días" />

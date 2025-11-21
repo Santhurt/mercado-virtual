@@ -1,8 +1,14 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import RatingStars from "./RatingStars";
+import type { IComment } from "@/types/AppTypes";
 
-const CommentItem = ({ commentData, isLast }) => {
+type CommentItemProps = {
+    commentData: IComment;
+    isLast: boolean;
+};
+
+const CommentItem = ({ commentData, isLast }: CommentItemProps) => {
     return (
         <>
             <div className="space-y-3">

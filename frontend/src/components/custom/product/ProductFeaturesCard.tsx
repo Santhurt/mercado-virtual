@@ -1,6 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-const ProductFeaturesCard = ({ features }) => {
+type ProductFeaturesCardProps = {
+    features: string[];
+};
+const ProductFeaturesCard = ({ features }: ProductFeaturesCardProps) => {
     return (
         <Card>
             <CardHeader>

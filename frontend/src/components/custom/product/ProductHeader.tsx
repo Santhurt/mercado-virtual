@@ -13,8 +13,13 @@ import {
 import RatingStars from "./RatingStars";
 import ProductQuickInfo from "./ProductQuickInfo";
 import SellerInfoCard from "./SellerInfoCard";
+import type { IProduct } from "@/types/AppTypes";
 
-const ProductHeader = ({ product }) => {
+type ProductHeaderProps = {
+    product: IProduct;
+};
+
+const ProductHeader = ({ product }: ProductHeaderProps) => {
     console.log(product);
     return (
         <Card>

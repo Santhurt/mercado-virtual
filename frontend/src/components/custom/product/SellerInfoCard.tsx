@@ -1,9 +1,14 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import type { ISellerInfo } from "@/types/AppTypes";
 import { Star, MapPin } from "lucide-react";
 
-const SellerInfoCard = ({ seller }) => {
+type SellerInfoCardProps = {
+    seller: ISellerInfo;
+};
+
+const SellerInfoCard = ({ seller }: SellerInfoCardProps) => {
     return (
         <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
             <div className="flex items-center gap-3">

@@ -1,6 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-const ProductSpecificationsCard = ({ specifications }) => {
+type ProductSpecsProps = {
+    specifications: Record<string, string>;
+};
+
+const ProductSpecificationsCard = ({ specifications }: ProductSpecsProps) => {
     return (
         <Card>
             <CardHeader>

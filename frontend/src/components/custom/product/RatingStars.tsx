@@ -1,7 +1,7 @@
 import { Star } from "lucide-react";
 
 // Componente utilitario para renderizar estrellas de calificación
-const RatingStars = ({ rating }) => {
+const RatingStars = ({ rating }: { rating: number }) => {
     return (
         <div className="flex">
             {Array.from({ length: 5 }, (_, i) => (
