@@ -49,7 +49,7 @@ const AppSidebar = ({ activeItem, setActiveItem }: Props) => {
             badge: 124,
             to: "/profile",
         },
-        { id: "ofertas", label: "Ofertas", icon: Tag, to: "#" },
+        { id: "ofertas", label: "Ofertas", icon: Tag, to: "/product" },
         {
             id: "mensajes",
             label: "Mensajes",

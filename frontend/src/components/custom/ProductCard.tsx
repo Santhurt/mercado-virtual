@@ -2,7 +2,6 @@ import {
     Card,
     CardContent,
     CardDescription,
-    CardFooter,
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
@@ -11,6 +10,12 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ShoppingBag, Heart, Star } from "lucide-react";
 import { useState } from "react";
+import {
+    TooltipProvider,
+    Tooltip,
+    TooltipTrigger,
+    TooltipContent,
+} from "@/components/ui/tooltip";
 
 type ProductCardProps = {
     title: string;
@@ -123,33 +128,43 @@ const ProductCard = ({
                 )}
 
                 <Separator />
-
-                {/* Precio */}
-                <div className="space-y-0.5">
-                    {discount && (
-                        <p className="text-xs text-muted-foreground line-through">
-                            $
-                            {(
-                                parseFloat(price.replace(/[^0-9.]/g, "")) * 1.3
-                            ).toFixed(2)}
+                <div className="flex items-center justify-between">
+                    <div className="flex flex-col leading-tight">
+                        {discount && (
+                            <p className="text-xs text-muted-foreground line-through">
+                                $
+                                {(
+                                    parseFloat(price.replace(/[^0-9.]/g, "")) *
+                                    1.3
+                                ).toFixed(2)}
+                            </p>
+                        )}
+                        <p className="text-2xl font-bold tracking-tight">
+                            {price}
                         </p>
-                    )}
-                    <p className="text-2xl font-bold tracking-tight">{price}</p>
-                    <p className="text-xs text-muted-foreground">
-                        Envío gratis
-                    </p>
+                        <p className="text-xs text-muted-foreground">
+                            Envío gratis
+                        </p>
+                    </div>
+
+                    {/* Tooltip + botón para ver producto */}
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    className="rounded-full shadow-sm hover:scale-110 transition px-4 py-2 flex items-center gap-2"
+                                >
+                                    <ShoppingBag className="h-5 w-5" />
+                                    Ver
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Ver producto</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
                 </div>
             </CardContent>
-
-            <CardFooter>
-                <Button
-                    className="w-full gap-2 font-medium shadow-sm hover:shadow-md transition-all"
-                    size="lg"
-                >
-                    <ShoppingBag className="h-5 w-5" />
-                    Añadir al carrito
-                </Button>
-            </CardFooter>
         </Card>
     );
 };
