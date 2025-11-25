@@ -1,8 +1,16 @@
 import Product from "../models/Product.js";
+import Seller from "../models/Seller.js";
 import { unlink } from "fs/promises";
 import { join, relative } from "path";
 
 const MAX_PRODUCT_IMAGES = 5;
+
+const populateProduct = (queryOrDoc) =>
+    queryOrDoc.populate({
+        path: "seller",
+        select: "businessName accountStatus user",
+        populate: { path: "user", select: "-password" },
+    });
 
 const removeUploadedFiles = async (files = []) => {
     await Promise.all(
@@ -34,11 +42,12 @@ const deleteStoredImages = async (imagePaths = []) => {
 // Obtener todos los productos
 export const getAllProducts = async (req, res) => {
     try {
-        const { page = 1, limit = 10, status, minPrice, maxPrice } = req.query;
+        const { page = 1, limit = 10, status, minPrice, maxPrice, sellerId } = req.query;
         
         // Construir filtros
         const filters = {};
         if (status) filters.status = status;
+        if (sellerId) filters.seller = sellerId;
         if (minPrice || maxPrice) {
             filters.price = {};
             if (minPrice) filters.price.$gte = Number(minPrice);
@@ -49,10 +58,12 @@ export const getAllProducts = async (req, res) => {
         const skip = (Number(page) - 1) * Number(limit);
 
         // Obtener productos con filtros y paginación
-        const products = await Product.find(filters)
-            .limit(Number(limit))
-            .skip(skip)
-            .sort({ createdAt: -1 });
+        const products = await populateProduct(
+            Product.find(filters)
+                .limit(Number(limit))
+                .skip(skip)
+                .sort({ createdAt: -1 }),
+        );
 
         // Contar total de productos
         const total = await Product.countDocuments(filters);
@@ -83,7 +94,7 @@ export const getProductById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const product = await Product.findById(id);
+        const product = await populateProduct(Product.findById(id));
 
         if (!product) {
             return res.status(404).json({
@@ -108,11 +119,11 @@ export const getProductById = async (req, res) => {
 // Crear un nuevo producto
 export const createProduct = async (req, res) => {
     try {
-        const productData = req.body;
+        const { sellerId, ...productData } = req.body;
 
         // Validar campos requeridos
-        const requiredFields = ["title", "price", "status", "rating", "description", "stock"];
-        const missingFields = requiredFields.filter((field) => !productData[field]);
+        const requiredFields = ["title", "price", "status", "rating", "description", "stock", "sellerId"];
+        const missingFields = requiredFields.filter((field) => !req.body[field]);
 
         if (missingFields.length > 0) {
             return res.status(400).json({
@@ -161,8 +172,23 @@ export const createProduct = async (req, res) => {
             });
         }
 
-        const product = new Product(productData);
-        await product.save();
+        const seller = await Seller.findById(sellerId);
+        if (!seller) {
+            return res.status(404).json({
+                success: false,
+                message: "Comerciante no encontrado",
+            });
+        }
+
+        const product = await Product.create({
+            ...productData,
+            seller: sellerId,
+        });
+
+        seller.products.push(product._id);
+        await seller.save();
+
+        await populateProduct(product);
 
         res.status(201).json({
             success: true,
@@ -215,6 +241,13 @@ export const updateProduct = async (req, res) => {
             });
         }
 
+        if (updateData.seller !== undefined || updateData.sellerId !== undefined) {
+            return res.status(400).json({
+                success: false,
+                message: "El comerciante asociado no puede cambiarse",
+            });
+        }
+
         const product = await Product.findByIdAndUpdate(id, updateData, {
             new: true,
             runValidators: true,
@@ -226,6 +259,8 @@ export const updateProduct = async (req, res) => {
                 message: "Producto no encontrado",
             });
         }
+
+        await populateProduct(product);
 
         res.status(200).json({
             success: true,
@@ -257,6 +292,10 @@ export const deleteProduct = async (req, res) => {
 
         if (product.images?.length) {
             await deleteStoredImages(product.images);
+        }
+
+        if (product.seller) {
+            await Seller.findByIdAndUpdate(product.seller, { $pull: { products: product._id } });
         }
 
         res.status(200).json({

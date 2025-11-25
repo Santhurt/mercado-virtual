@@ -4,6 +4,7 @@ import { config } from "dotenv";
 import mongodbConn from "./src/config/mongo.js";
 import morgan from "morgan";
 import productRoutes from "./src/routes/productRoutes.js";
+import sellerRoutes from "./src/routes/sellerRoutes.js";
 import userRoutes from "./src/routes/userRoutes.js";
 
 config();
@@ -22,6 +23,7 @@ if (process.env.NODE_ENV !== "test") {
 // Rutas de la aplicacion
 app.use("/api/products", productRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/sellers", sellerRoutes);
 
 const PORT = process.env.PORT || 3000;
 

@@ -68,11 +68,12 @@ const productSchema = new Schema(
                 message: "Un producto solo puede tener hasta 5 imágenes",
             },
         },
-        // seller: {
-        //     type: Schema.Types.ObjectId,
-        //     ref: "Seller",
-        //     required: true,
-        // },
+        seller: {
+            type: Schema.Types.ObjectId,
+            ref: "Seller",
+            required: true,
+            immutable: true,
+        },
     },
     { timestamps: true },
 );
