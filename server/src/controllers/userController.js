@@ -1,4 +1,6 @@
 import jwt from "jsonwebtoken";
+import fs from "fs/promises";
+import path from "path";
 import User from "../models/User.js";
 
 const sanitizeUser = (userDoc) => {
@@ -6,6 +8,24 @@ const sanitizeUser = (userDoc) => {
     const user = userDoc.toObject();
     delete user.password;
     return user;
+};
+
+const resolveImageAbsolutePath = (imagePath) => {
+    if (!imagePath) return null;
+    const sanitizedPath = imagePath.replace(/^\/?public\//, "");
+    return path.resolve("public", sanitizedPath);
+};
+
+const removeUserImage = async (imagePath) => {
+    const absolutePath = resolveImageAbsolutePath(imagePath);
+    if (!absolutePath) return;
+    try {
+        await fs.unlink(absolutePath);
+    } catch (error) {
+        if (error.code !== "ENOENT") {
+            throw error;
+        }
+    }
 };
 
 const generateToken = (userId) => {
@@ -228,6 +248,115 @@ export const deleteUser = async (req, res) => {
         res.status(500).json({
             success: false,
             message: "Error al eliminar el usuario",
+            error: error.message,
+        });
+    }
+};
+
+export const uploadProfileImage = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "Usuario no encontrado",
+            });
+        }
+
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                message: "No se recibió ninguna imagen",
+            });
+        }
+
+        if (user.profileImage) {
+            await removeUserImage(user.profileImage);
+        }
+
+        user.profileImage = `/public/users/${req.file.filename}`;
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Imagen de perfil actualizada correctamente",
+            data: {
+                profileImage: user.profileImage,
+            },
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Error al subir la imagen",
+            error: error.message,
+        });
+    }
+};
+
+export const deleteProfileImage = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "Usuario no encontrado",
+            });
+        }
+
+        if (!user.profileImage) {
+            return res.status(404).json({
+                success: false,
+                message: "El usuario no tiene imagen configurada",
+            });
+        }
+
+        await removeUserImage(user.profileImage);
+        user.profileImage = null;
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Imagen de perfil eliminada correctamente",
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Error al eliminar la imagen",
+            error: error.message,
+        });
+    }
+};
+
+export const getProfileImage = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "Usuario no encontrado",
+            });
+        }
+
+        if (!user.profileImage) {
+            return res.status(404).json({
+                success: false,
+                message: "El usuario no cuenta con imagen de perfil",
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: {
+                profileImage: user.profileImage,
+            },
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Error al obtener la imagen",
             error: error.message,
         });
     }

@@ -45,6 +45,10 @@ const userSchema = new Schema(
             enum: ["admin", "seller", "customer"],
             default: "customer",
         },
+        profileImage: {
+            type: String,
+            default: null,
+        },
     },
     {
         timestamps: true,
