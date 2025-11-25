@@ -4,6 +4,7 @@ import { config } from "dotenv";
 import mongodbConn from "./src/config/mongo.js";
 import morgan from "morgan";
 import productRoutes from "./src/routes/productRoutes.js";
+import userRoutes from "./src/routes/userRoutes.js";
 
 config();
 
@@ -14,13 +15,20 @@ app.use(cors());
 app.use(morgan("dev"));
 app.use("/public", express.static("public"));
 
-mongodbConn();
+if (process.env.NODE_ENV !== "test") {
+    mongodbConn();
+}
 
 // Rutas de la aplicacion
 app.use("/api/products", productRoutes);
+app.use("/api/users", userRoutes);
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-    console.log("Listening on port: " + PORT);
-});
+if (process.env.NODE_ENV !== "test") {
+    app.listen(PORT, () => {
+        console.log("Listening on port: " + PORT);
+    });
+}
+
+export default app;
