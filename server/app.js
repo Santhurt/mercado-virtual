@@ -7,6 +7,7 @@ import productRoutes from "./src/routes/productRoutes.js";
 import sellerRoutes from "./src/routes/sellerRoutes.js";
 import userRoutes from "./src/routes/userRoutes.js";
 import chatRoutes from "./src/routes/chatRoutes.js";
+import messageRoutes from "./src/routes/messageRoutes.js";
 
 config();
 
@@ -26,6 +27,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/sellers", sellerRoutes);
 app.use("/api/chats", chatRoutes);
+app.use("/api/messages", messageRoutes);
 
 const PORT = process.env.PORT || 3000;
 
