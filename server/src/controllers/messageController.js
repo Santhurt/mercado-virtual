@@ -4,7 +4,7 @@ import Chat from "../models/Chat.js";
 export const createMessage = async (req, res) => {
     try {
         const { chatId, content, receiverId } = req.body;
-        const senderId = req.user._id; // Asumiendo que tenemos el usuario en req.user (middleware de auth)
+        const senderId = req.user.id; // Asumiendo que tenemos el usuario en req.user (middleware de auth)
 
         if (!chatId || !content || !receiverId) {
             return res.status(400).json({

@@ -9,6 +9,7 @@ import userRoutes from "./src/routes/userRoutes.js";
 import chatRoutes from "./src/routes/chatRoutes.js";
 import messageRoutes from "./src/routes/messageRoutes.js";
 import orderRoutes from "./src/routes/orderRoutes.js";
+import cartRoutes from "./src/routes/cartRoutes.js";
 
 config();
 
@@ -30,6 +31,7 @@ app.use("/api/sellers", sellerRoutes);
 app.use("/api/chats", chatRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/cart", cartRoutes);
 
 const PORT = process.env.PORT || 3000;
 
