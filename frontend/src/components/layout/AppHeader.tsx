@@ -3,6 +3,7 @@ import { ModeToggle } from "../custom/mode-toggle";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { SidebarTrigger } from "../ui/sidebar";
+import { CartButton, CartSheet } from "../custom/cart";
 
 const AppHeader = () => {
     return (
@@ -20,6 +21,7 @@ const AppHeader = () => {
             </div>
 
             <div className="flex items-center gap-2">
+                <CartButton />
                 <Button variant="ghost" size="icon" className="relative">
                     <Bell className="h-5 w-5" />
                     <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-destructive" />
@@ -30,8 +32,10 @@ const AppHeader = () => {
                 </Button>
             </div>
             <ModeToggle />
+            <CartSheet />
         </header>
     );
 };
 
 export default AppHeader;
+

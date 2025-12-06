@@ -105,3 +105,25 @@ export interface IOrder {
     createdAt: Date;
     updatedAt: Date;
 }
+
+// ===== CART TYPES =====
+
+export type CartStatus = "active" | "completed" | "abandoned";
+
+export interface ICartItem {
+    productId: string;
+    title: string;
+    price: number;
+    quantity: number;
+    image?: string;
+}
+
+export interface ICart {
+    userId?: string | null;
+    sessionId?: string | null;
+    items: ICartItem[];
+    totalPrice: number;
+    status: CartStatus;
+    createdAt?: Date;
+    updatedAt?: Date;
+}
