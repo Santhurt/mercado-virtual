@@ -36,7 +36,7 @@ const UserProfileCard = ({ userProfile }: UserProfileCardProps) => {
     };
 
     return (
-        <Card className="max-w-4xl mx-auto shadow-lg">
+        <Card className="w-full mx-auto shadow-lg">
             <CardContent className="pt-6">
                 {/* 1. Encabezado: Avatar, Info principal y Acciones */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
