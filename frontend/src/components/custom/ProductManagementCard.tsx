@@ -29,29 +29,42 @@ const ProductManagementCard = ({
     onDelete,
 }: ProductManagementCardProps) => {
     return (
-        <Card className="group overflow-hidden flex flex-col transition-all hover:shadow-lg border-muted/60">
+        <Card
+            className={'group overflow-hidden flex flex-col transition-all duration-300 hover:shadow-xl hover:border-primary/50 dark:hover:border-primary'}
+        >
             {/* Image Section */}
             <div className="aspect-video w-full bg-muted shrink-0 flex items-center justify-center relative overflow-hidden">
                 {image ? (
                     <img
                         src={image}
                         alt={title}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        // Escala más sutil en hover
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-103"
                     />
                 ) : (
                     <ImageIcon className="h-12 w-12 text-muted-foreground/50" />
                 )}
 
-                {/* Overlays */}
+                {/* Overlay de Agotado */}
+                {stock <= 0 && (
+                    <div className="absolute inset-0 bg-background/50 flex items-center justify-center">
+                        <span className="text-xl font-bold text-destructive/80 p-2 rounded-lg bg-background/80 backdrop-blur-sm">
+                            AGOTADO
+                        </span>
+                    </div>
+                )}
+
+                {/* Overlays - Stock Badge (Más prominente) */}
                 <div className="absolute top-2 left-2 flex gap-2">
                     <Badge
-                        variant={stock > 0 ? "secondary" : "destructive"}
-                        className="shadow-sm backdrop-blur-md bg-background/90"
+                        variant="outline" // Usar default para stock positivo
+                        className="shadow-md backdrop-blur-md bg-background/90 font-semibold"
                     >
                         {stock > 0 ? `${stock} en stock` : "Agotado"}
                     </Badge>
                 </div>
 
+                {/* Dropdown Menu (No necesita cambios mayores) */}
                 <div className="absolute top-2 right-2">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -81,35 +94,37 @@ const ProductManagementCard = ({
             </div>
 
             {/* Content Section */}
-            <div className="flex-1 flex flex-col p-4 gap-3">
+            <div className="flex-1 flex flex-col p-4 gap-4"> {/* Aumentar espaciado a gap-4 */}
                 <div className="space-y-1">
                     <div className="flex justify-between items-start gap-2">
-                        <h3 className="font-semibold text-base line-clamp-2 leading-tight group-hover:text-primary transition-colors">
+                        <h3 className="font-extrabold text-xl line-clamp-2 leading-snug group-hover:text-primary transition-colors">
+                            {/* Título más grande y con más peso */}
                             {title}
                         </h3>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Badge variant="outline" className="font-normal text-xs px-2 py-0.5 h-auto">
+                    {/* Mover status/SKU a una línea secundaria, más pequeña */}
+                    <div className="flex items-center gap-3 text-sm text-muted-foreground pt-1">
+                        <Badge variant="outline" className="font-medium text-xs px-2 py-0.5 h-auto">
                             {status}
                         </Badge>
-                        <span>•</span>
-                        <span>SKU: {Math.random().toString(36).substr(2, 6).toUpperCase()}</span>
+                        <span className="text-xs">SKU: {Math.random().toString(36).substr(2, 6).toUpperCase()}</span>
                     </div>
                 </div>
 
-                <div className="mt-auto pt-2 flex items-center justify-between border-t">
+                {/* Precio y Botón - Mejor contraste y jerarquía */}
+                <div className="mt-auto pt-3 flex items-center justify-between border-t border-border/70">
                     <div className="flex flex-col">
-                        <span className="text-[10px] uppercase text-muted-foreground font-semibold">Precio</span>
-                        <p className="font-bold text-lg">{price}</p>
+                        <span className="text-[10px] uppercase text-muted-foreground font-medium tracking-wider">Precio</span>
+                        <p className="font-extrabold text-2xl text-primary">{price}</p> {/* Precio más grande y en color principal */}
                     </div>
                     <Button
                         variant="default"
                         size="sm"
-                        className="h-8 px-4"
+                        className="h-9 px-4" // Botón un poco más alto
                         onClick={onEdit}
                     >
                         <Edit className="h-3.5 w-3.5 mr-2" />
-                        Gestionar
+                        Editar
                     </Button>
                 </div>
             </div>
