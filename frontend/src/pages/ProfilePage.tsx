@@ -1,8 +1,7 @@
 import { useState } from "react";
 import MainLayout from "@/components/layout/MainLayout";
-import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Package, FileText } from "lucide-react";
+import { Package } from "lucide-react";
 import ProductCard from "@/components/custom/ProductCard";
 import UserProfileCard from "@/components/custom/UserProfileCard";
 
@@ -66,15 +65,12 @@ const ProfilePage = () => {
 
                 {/* Tabs de contenido */}
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
-                    <TabsList className="w-full grid grid-cols-2">
+                    <TabsList className="w-full grid grid-cols-1">
                         <TabsTrigger value="productos" className="gap-2">
                             <Package className="h-4 w-4" />
                             Productos
                         </TabsTrigger>
-                        <TabsTrigger value="posts" className="gap-2">
-                            <FileText className="h-4 w-4" />
-                            Posts
-                        </TabsTrigger>
+
                     </TabsList>
 
                     <TabsContent value="productos" className="mt-6">
@@ -85,22 +81,7 @@ const ProfilePage = () => {
                         </div>
                     </TabsContent>
 
-                    <TabsContent value="posts" className="mt-6">
-                        <Card className="border-dashed">
-                            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-                                <div className="rounded-full bg-muted p-4 mb-4">
-                                    <FileText className="h-10 w-10 text-muted-foreground" />
-                                </div>
-                                <h3 className="font-semibold text-lg mb-2">
-                                    No hay posts aún
-                                </h3>
-                                <p className="text-sm text-muted-foreground max-w-sm">
-                                    Las publicaciones de este usuario aparecerán
-                                    aquí
-                                </p>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
+
                 </Tabs>
             </div>
         </MainLayout>

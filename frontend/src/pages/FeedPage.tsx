@@ -1,5 +1,4 @@
-import CreatePostCard from "@/components/custom/CreatePostCard";
-import PostCard from "@/components/custom/PostCard";
+import ProductCard from "@/components/custom/ProductCard";
 import MainLayout from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,51 +9,32 @@ import { useState } from "react";
 const FeedPage = () => {
     const [activeTab, setActiveTab] = useState("productos");
 
-    const posts = [
+    const products = [
         {
-            id: 1,
-            user: "Ana López",
-            role: "Vendedor Verificado",
             title: "iPhone 15 Pro Max - Nuevo en caja",
-            description:
-                "256GB, Color Titanio Natural. Garantía oficial Apple.",
             price: "$1,299",
-            images: 4,
-            likes: 124,
-            comments: 28,
-            timestamp: "2h",
-            category: "Electrónica",
+            status: "Nuevo",
+            rating: 4.8,
+            tags: ["Electrónica", "Apple", "Garantía"],
         },
         {
-            id: 2,
-            user: "María García",
-            role: "Mayorista Premium",
             title: "Lote de ropa de marca - 50 piezas",
-            description: "Variedad de tallas y estilos. Stock limitado.",
             price: "$2,500",
-            images: 8,
-            likes: 85,
-            comments: 42,
-            timestamp: "5h",
-            category: "Textiles",
+            status: "Mayorista",
+            rating: 4.5,
+            tags: ["Ropa", "Lote", "Negocio"],
         },
         {
-            id: 3,
-            user: "Carlos Ruiz",
-            role: "Distribuidor Oficial",
             title: "Laptop Gaming RTX 4070",
-            description: "Intel i9, 32GB RAM, 1TB SSD. Como nueva.",
             price: "$1,799",
-            images: 6,
-            likes: 156,
-            comments: 63,
-            timestamp: "1d",
-            category: "Tecnología",
+            status: "Usado - Como nuevo",
+            rating: 4.9,
+            tags: ["Gaming", "Laptop", "High-End"],
         },
     ];
     return (
         <MainLayout>
-            <CreatePostCard />
+
 
             {/* Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -74,9 +54,11 @@ const FeedPage = () => {
                 </TabsList>
 
                 <TabsContent value="productos" className="space-y-4 mt-6">
-                    {posts.map((post) => (
-                        <PostCard post={post} />
-                    ))}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {products.map((product, index) => (
+                            <ProductCard key={index} {...product} />
+                        ))}
+                    </div>
                 </TabsContent>
 
                 <TabsContent value="ofertas" className="mt-6">
@@ -107,7 +89,7 @@ const FeedPage = () => {
                             </h3>
                             <p className="text-sm text-muted-foreground max-w-sm mb-4">
                                 Sigue a tus vendedores favoritos para ver sus
-                                publicaciones aquí
+                                productos aquí
                             </p>
                             <Button variant="outline">
                                 <Search className="h-4 w-4 mr-2" />

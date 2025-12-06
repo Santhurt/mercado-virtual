@@ -3,7 +3,7 @@ import NotFoundPage from "@/pages/NotFoundPage";
 import ProductDetailPage from "@/pages/ProductDetailPage";
 import ProfilePage from "@/pages/ProfilePage";
 import { createBrowserRouter } from "react-router-dom";
-import PostPage from "@/pages/PostPage";
+
 
 const router = createBrowserRouter([
     {
@@ -16,12 +16,9 @@ const router = createBrowserRouter([
     },
     {
         path: "/product",
-        element: <ProductDetailPage/>
+        element: <ProductDetailPage />
     },
-   {
-        path: "/post",
-        element: <PostPage/>
-    },
+
 
 
 

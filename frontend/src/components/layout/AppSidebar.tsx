@@ -55,7 +55,7 @@ const AppSidebar = ({ activeItem, setActiveItem }: Props) => {
             label: "Mensajes",
             icon: MessageSquare,
             badge: 3,
-            to: "/post",
+            to: "#",
         },
     ];
 
