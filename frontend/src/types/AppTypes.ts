@@ -127,3 +127,27 @@ export interface ICart {
     createdAt?: Date;
     updatedAt?: Date;
 }
+
+// ===== CHECKOUT TYPES =====
+
+export type PaymentMethod = "credit_card" | "pse" | "nequi" | "cash_on_delivery";
+
+export type CheckoutStep = "shipping" | "payment" | "review" | "confirmation";
+
+export interface IPaymentDetails {
+    cardNumber?: string;
+    cardHolder?: string;
+    expiryDate?: string;
+    cvv?: string;
+    bankCode?: string; // Para PSE
+    phoneNumber?: string; // Para Nequi
+}
+
+export interface ICheckoutState {
+    step: CheckoutStep;
+    shippingAddress: IShippingAddress | null;
+    paymentMethod: PaymentMethod | null;
+    paymentDetails: IPaymentDetails | null;
+    orderNumber?: string;
+}
+

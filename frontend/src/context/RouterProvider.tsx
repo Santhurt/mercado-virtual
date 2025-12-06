@@ -3,6 +3,7 @@ import NotFoundPage from "@/pages/NotFoundPage";
 import ProductDetailPage from "@/pages/ProductDetailPage";
 import ProfilePage from "@/pages/ProfilePage";
 import MerchantDashboardPage from "@/pages/MerchantDashboardPage";
+import CheckoutPage from "@/pages/CheckoutPage";
 import { createBrowserRouter } from "react-router-dom";
 
 
@@ -22,6 +23,10 @@ const router = createBrowserRouter([
     {
         path: "/dashboard",
         element: <MerchantDashboardPage />
+    },
+    {
+        path: "/checkout",
+        element: <CheckoutPage />
     },
 
 

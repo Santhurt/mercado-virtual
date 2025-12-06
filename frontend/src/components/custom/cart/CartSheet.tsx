@@ -1,4 +1,5 @@
 import { ShoppingBag, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import {
     Sheet,
     SheetContent,
@@ -14,9 +15,15 @@ import { useCart } from "@/context/CartContext";
 import CartItem from "./CartItem";
 
 const CartSheet = () => {
+    const navigate = useNavigate();
     const { items, totalPrice, itemCount, isOpen, closeCart, clearCart } = useCart();
 
     const isEmpty = items.length === 0;
+
+    const handleCheckout = () => {
+        closeCart();
+        navigate("/checkout");
+    };
 
     return (
         <Sheet open={isOpen} onOpenChange={(open) => !open && closeCart()}>
@@ -88,7 +95,11 @@ const CartSheet = () => {
                             </div>
 
                             {/* Actions */}
-                            <Button className="w-full gap-2" size="lg">
+                            <Button
+                                className="w-full gap-2"
+                                size="lg"
+                                onClick={handleCheckout}
+                            >
                                 <span>Proceder al Pago</span>
                                 <ArrowRight className="h-4 w-4" />
                             </Button>
@@ -109,3 +120,4 @@ const CartSheet = () => {
 };
 
 export default CartSheet;
+

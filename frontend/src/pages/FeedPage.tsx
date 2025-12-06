@@ -20,9 +20,14 @@ import {
     Bell,
     ShoppingCart,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useCart } from "../context/CartContext";
 
 const FeedPage = () => {
+    const { addItem } = useCart();
+    useEffect(() => {
+        addItem({ productId: "123", title: "Producto", price: 25000 });
+    }, [])
     const [activeTab, setActiveTab] = useState("productos");
     const [activeCategory, setActiveCategory] = useState("Todo");
 
