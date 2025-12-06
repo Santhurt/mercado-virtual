@@ -59,3 +59,49 @@ export interface IUserProfile {
     };
     // avatarUrl?: string; // Si hubiera imagen, se agregaría aquí
 }
+
+// ===== ORDER TYPES =====
+
+export type OrderStatus = "pending" | "processing" | "shipped" | "delivered" | "cancelled";
+
+export interface IOrderProduct {
+    productId: string;
+    title: string;
+    unitPrice: number;
+    quantity: number;
+    subtotal: number;
+    image?: string;
+}
+
+export interface IShippingAddress {
+    fullName: string;
+    phone: string;
+    city: string;
+    addressLine: string;
+    details?: string;
+}
+
+export interface IOrderHistoryEntry {
+    status: OrderStatus;
+    timestamp: Date;
+    actorId?: string;
+}
+
+export interface IOrder {
+    _id: string;
+    customerId: string;
+    merchantId: string;
+    status: OrderStatus;
+    products: IOrderProduct[];
+    subtotal: number;
+    shippingCost: number;
+    taxes: number;
+    discount: number;
+    total: number;
+    shippingAddress: IShippingAddress;
+    deliveryMethod: string;
+    trackingNumber?: string | null;
+    history: IOrderHistoryEntry[];
+    createdAt: Date;
+    updatedAt: Date;
+}

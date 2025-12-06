@@ -9,9 +9,10 @@ import {
     SheetTitle,
     SheetTrigger,
 } from "@/components/ui/sheet";
-import { Plus, Package, Tags, Percent } from "lucide-react";
+import { Plus, Package, Tags, Percent, ShoppingBag } from "lucide-react";
 import ProductManagementCard from "@/components/custom/ProductManagementCard";
 import ProductForm from "@/components/custom/ProductForm";
+import OrdersSection from "@/components/custom/OrdersSection";
 import { useState } from "react";
 
 const MerchantDashboardPage = () => {
@@ -53,7 +54,7 @@ const MerchantDashboardPage = () => {
                             Panel de Control
                         </h1>
                         <p className="text-muted-foreground">
-                            Gestiona tus productos, inventario y promociones.
+                            Gestiona tus productos, órdenes, inventario y promociones.
                         </p>
                     </div>
 
@@ -77,8 +78,12 @@ const MerchantDashboardPage = () => {
                     </Sheet>
                 </div>
 
-                <Tabs defaultValue="productos" className="space-y-6">
-                    <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
+                <Tabs defaultValue="ordenes" className="space-y-6">
+                    <TabsList className="grid w-full grid-cols-4 lg:w-[550px]">
+                        <TabsTrigger value="ordenes" className="gap-2">
+                            <ShoppingBag className="h-4 w-4" />
+                            Órdenes
+                        </TabsTrigger>
                         <TabsTrigger value="productos" className="gap-2">
                             <Package className="h-4 w-4" />
                             Productos
@@ -92,6 +97,10 @@ const MerchantDashboardPage = () => {
                             Descuentos
                         </TabsTrigger>
                     </TabsList>
+
+                    <TabsContent value="ordenes" className="space-y-4">
+                        <OrdersSection />
+                    </TabsContent>
 
                     <TabsContent value="productos" className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
