@@ -59,10 +59,10 @@ const AppSidebar = ({ activeItem, setActiveItem }: Props) => {
         },
     ];
 
-    const secondaryMenu = [
-        { id: "trending", label: "Tendencias", icon: TrendingUp },
-        { id: "carrito", label: "Mi Carrito", icon: ShoppingCart },
-        { id: "tienda", label: "Mi Tienda", icon: Store },
+    const secondaryMenu: MenuItem[] = [
+        { id: "trending", label: "Tendencias", icon: TrendingUp, to: "#" },
+        { id: "carrito", label: "Mi Carrito", icon: ShoppingCart, to: "#" },
+        { id: "tienda", label: "Mi Tienda", icon: Store, to: "/dashboard" },
     ];
 
     return (

@@ -2,8 +2,6 @@ import React, { useEffect, useState } from "react";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import AppSidebar from "./AppSidebar";
 import AppHeader from "./AppHeader";
-import TrendingCard from "./RightSidebar/TrendingCard";
-import SuggestedSellersCard from "./RightSidebar/SuggestedSellersCard";
 import Preloader from "../ui/preloader";
 
 const MainLayout = ({ children }: { children: React.ReactNode }) => {
@@ -15,7 +13,7 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
         return () => clearTimeout(timeout);
     });
 
-    if(loading) return <Preloader/>
+    if (loading) return <Preloader />
 
     return (
         <SidebarProvider>
@@ -32,20 +30,11 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
                     {/* Main Content */}
                     <div className="flex-1 overflow-auto p-4 md:p-6">
                         <div className="mx-auto max-w-7xl">
-                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                            <div className="grid grid-cols-1 gap-6">
                                 {/* Main Feed */}
-                                <main className="lg:col-span-8 space-y-6">
+                                <main className="lg:col-span-12 space-y-6">
                                     {children}
                                 </main>
-
-                                {/* Right Sidebar */}
-                                <aside className="lg:col-span-4 space-y-6">
-                                    {/* Trending Card */}
-                                    <TrendingCard />
-
-                                    {/* Suggested Sellers Card */}
-                                    <SuggestedSellersCard />
-                                </aside>
                             </div>
                         </div>
                     </div>

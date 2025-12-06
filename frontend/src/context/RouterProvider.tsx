@@ -2,6 +2,7 @@ import FeedPage from "@/pages/FeedPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 import ProductDetailPage from "@/pages/ProductDetailPage";
 import ProfilePage from "@/pages/ProfilePage";
+import MerchantDashboardPage from "@/pages/MerchantDashboardPage";
 import { createBrowserRouter } from "react-router-dom";
 
 
@@ -17,6 +18,10 @@ const router = createBrowserRouter([
     {
         path: "/product",
         element: <ProductDetailPage />
+    },
+    {
+        path: "/dashboard",
+        element: <MerchantDashboardPage />
     },
 
 
