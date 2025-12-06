@@ -12,6 +12,7 @@ import {
     getProfileImage,
 } from "../controllers/userController.js";
 import { uploadUserProfileImage } from "../middlewares/userImageUpload.js";
+import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -28,15 +29,18 @@ const handleProfileUpload = (req, res, next) => {
     });
 };
 
+// Rutas públicas de usuarios
 router.post("/register", registerUser);
 router.post("/login", loginUser);
-router.get("/", getUsers);
-router.get("/:id", getUserById);
-router.put("/:id", updateUser);
-router.delete("/:id", deleteUser);
-router.post("/:id/profile-image", handleProfileUpload, uploadProfileImage);
 router.get("/:id/profile-image", getProfileImage);
-router.delete("/:id/profile-image", deleteProfileImage);
+
+// Rutas protegidas de usuarios (requieren autenticación)
+router.get("/", authMiddleware, getUsers);
+router.get("/:id", authMiddleware, getUserById);
+router.put("/:id", authMiddleware, updateUser);
+router.delete("/:id", authMiddleware, deleteUser);
+router.post("/:id/profile-image", authMiddleware, handleProfileUpload, uploadProfileImage);
+router.delete("/:id/profile-image", authMiddleware, deleteProfileImage);
 
 export default router;
 

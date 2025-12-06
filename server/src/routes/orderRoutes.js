@@ -5,12 +5,14 @@ import {
     getOrdersByUser,
     updateOrderStatus,
 } from "../controllers/orderController.js";
+import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/", createOrder);
-router.get("/:id", getOrderById);
-router.get("/user/:userId", getOrdersByUser);
-router.patch("/:id/status", updateOrderStatus);
+// Todas las rutas de órdenes requieren autenticación
+router.post("/", authMiddleware, createOrder);
+router.get("/:id", authMiddleware, getOrderById);
+router.get("/user/:userId", authMiddleware, getOrdersByUser);
+router.patch("/:id/status", authMiddleware, updateOrderStatus);
 
 export default router;

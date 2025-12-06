@@ -6,13 +6,15 @@ import {
     removeFromCart,
     clearCart,
 } from "../controllers/cartController.js";
+import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.get("/", getCart);
-router.post("/add", addToCart);
-router.put("/update", updateCartItem);
-router.delete("/remove", removeFromCart);
-router.delete("/clear", clearCart);
+// Todas las rutas de carrito requieren autenticación
+router.get("/", authMiddleware, getCart);
+router.post("/add", authMiddleware, addToCart);
+router.put("/update", authMiddleware, updateCartItem);
+router.delete("/remove", authMiddleware, removeFromCart);
+router.delete("/clear", authMiddleware, clearCart);
 
 export default router;
