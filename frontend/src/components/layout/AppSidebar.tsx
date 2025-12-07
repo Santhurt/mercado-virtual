@@ -3,7 +3,6 @@ import {
     Package,
     Tag,
     MessageSquare,
-    TrendingUp,
     ShoppingCart,
     Store,
     ChevronDown,
@@ -33,6 +32,7 @@ import {
 import type React from "react";
 import { Link } from "react-router-dom";
 import type { MenuItem } from "@/types/AppTypes";
+import { useCart } from "../../context/CartContext";
 
 type Props = {
     activeItem: string;
@@ -40,6 +40,8 @@ type Props = {
 };
 
 const AppSidebar = ({ activeItem, setActiveItem }: Props) => {
+    const { toggleCart } = useCart();
+
     const mainMenu: MenuItem[] = [
         { id: "home", label: "Inicio", icon: Home, to: "/" },
         {
@@ -47,23 +49,30 @@ const AppSidebar = ({ activeItem, setActiveItem }: Props) => {
             label: "Productos",
             icon: Package,
             badge: 124,
-            to: "/profile",
+            to: "/",
         },
-        { id: "ofertas", label: "Ofertas", icon: Tag, to: "/product" },
+        { id: "ofertas", label: "Ofertas", icon: Tag, to: "/" },
         {
             id: "mensajes",
             label: "Mensajes",
             icon: MessageSquare,
             badge: 3,
-            to: "#",
+            to: "/messages",
         },
     ];
 
     const secondaryMenu: MenuItem[] = [
-        { id: "trending", label: "Tendencias", icon: TrendingUp, to: "#" },
         { id: "carrito", label: "Mi Carrito", icon: ShoppingCart, to: "#" },
         { id: "tienda", label: "Mi Tienda", icon: Store, to: "/dashboard" },
     ];
+
+    const handleItemClick = (e: React.MouseEvent, item: MenuItem) => {
+        if (item.id === "carrito") {
+            e.preventDefault();
+            toggleCart();
+        }
+        setActiveItem(item.id);
+    };
 
     return (
         <Sidebar collapsible="icon">
@@ -71,7 +80,7 @@ const AppSidebar = ({ activeItem, setActiveItem }: Props) => {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <a href="#">
+                            <Link to="/">
                                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                                     <Store className="size-4" />
                                 </div>
@@ -83,7 +92,7 @@ const AppSidebar = ({ activeItem, setActiveItem }: Props) => {
                                         Pro
                                     </span>
                                 </div>
-                            </a>
+                            </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
@@ -98,13 +107,15 @@ const AppSidebar = ({ activeItem, setActiveItem }: Props) => {
                                 const Icon = item.icon;
                                 return (
                                     <SidebarMenuItem key={item.id}>
-                                        <Link to={item.to}>
+                                        <Link
+                                            to={item.to}
+                                            onClick={(e) =>
+                                                handleItemClick(e, item)
+                                            }
+                                        >
                                             <SidebarMenuButton
                                                 isActive={
                                                     activeItem === item.id
-                                                }
-                                                onClick={() =>
-                                                    setActiveItem(item.id)
                                                 }
                                                 tooltip={item.label}
                                             >
@@ -132,16 +143,22 @@ const AppSidebar = ({ activeItem, setActiveItem }: Props) => {
                                 const Icon = item.icon;
                                 return (
                                     <SidebarMenuItem key={item.id}>
-                                        <SidebarMenuButton
-                                            isActive={activeItem === item.id}
-                                            onClick={() =>
-                                                setActiveItem(item.id)
+                                        <Link
+                                            to={item.to}
+                                            onClick={(e) =>
+                                                handleItemClick(e, item)
                                             }
-                                            tooltip={item.label}
                                         >
-                                            <Icon />
-                                            <span>{item.label}</span>
-                                        </SidebarMenuButton>
+                                            <SidebarMenuButton
+                                                isActive={
+                                                    activeItem === item.id
+                                                }
+                                                tooltip={item.label}
+                                            >
+                                                <Icon />
+                                                <span>{item.label}</span>
+                                            </SidebarMenuButton>
+                                        </Link>
                                     </SidebarMenuItem>
                                 );
                             })}
@@ -157,9 +174,12 @@ const AppSidebar = ({ activeItem, setActiveItem }: Props) => {
                             isActive={activeItem === "settings"}
                             onClick={() => setActiveItem("settings")}
                             tooltip="Configuración"
+                            asChild
                         >
-                            <Settings />
-                            <span>Configuración</span>
+                            <Link to="/settings">
+                                <Settings />
+                                <span>Configuración</span>
+                            </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                     <SidebarMenuItem>
@@ -177,13 +197,17 @@ const AppSidebar = ({ activeItem, setActiveItem }: Props) => {
                                 side="top"
                                 className="w-[--radix-popper-anchor-width]"
                             >
-                                <DropdownMenuItem>
-                                    <User className="mr-2 h-4 w-4" />
-                                    <span>Perfil</span>
+                                <DropdownMenuItem asChild>
+                                    <Link to="/profile">
+                                        <User className="mr-2 h-4 w-4" />
+                                        <span>Perfil</span>
+                                    </Link>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                    <Settings className="mr-2 h-4 w-4" />
-                                    <span>Configuración</span>
+                                <DropdownMenuItem asChild>
+                                    <Link to="/settings">
+                                        <Settings className="mr-2 h-4 w-4" />
+                                        <span>Configuración</span>
+                                    </Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem>
