@@ -1,6 +1,20 @@
 import type React from "react";
 
+// ===== USER TYPES =====
 
+export type UserRole = "admin" | "seller" | "customer";
+
+export interface IUser {
+    _id: string;
+    fullName: string;
+    email: string;
+    documentNumber: string;
+    age: number;
+    phone: string;
+    registrationDate: Date;
+    role: UserRole;
+    profileImage?: string | null;
+}
 
 export interface IProduct {
     title: string;

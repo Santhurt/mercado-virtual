@@ -5,6 +5,7 @@ import ProfilePage from "@/pages/ProfilePage";
 import MerchantDashboardPage from "@/pages/MerchantDashboardPage";
 import CheckoutPage from "@/pages/CheckoutPage";
 import MessagesPage from "@/pages/MessagesPage";
+import AccountSettingsPage from "@/pages/AccountSettingsPage";
 import { createBrowserRouter } from "react-router-dom";
 
 
@@ -33,10 +34,10 @@ const router = createBrowserRouter([
         path: "/messages",
         element: <MessagesPage />
     },
-
-
-
-
+    {
+        path: "/settings",
+        element: <AccountSettingsPage />
+    },
     {
         path: "*",
         element: <NotFoundPage />,
