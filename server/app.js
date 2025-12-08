@@ -11,6 +11,7 @@ import messageRoutes from "./src/routes/messageRoutes.js";
 import orderRoutes from "./src/routes/orderRoutes.js";
 import cartRoutes from "./src/routes/cartRoutes.js";
 import reviewRoutes from "./src/routes/reviewRoutes.js";
+import categoryRoutes from "./src/routes/categoryRoutes.js";
 
 config();
 
@@ -34,6 +35,7 @@ app.use("/api/messages", messageRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/categories", categoryRoutes);
 
 const PORT = process.env.PORT || 3000;
 
