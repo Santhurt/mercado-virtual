@@ -165,3 +165,29 @@ export interface ICheckoutState {
     orderNumber?: string;
 }
 
+// ===== AUTH TYPES =====
+
+export interface ILoginPayload {
+    email: string;
+    password: string;
+}
+
+export interface IRegisterPayload {
+    fullName: string;
+    email: string;
+    password: string;
+    documentNumber: string;
+    age: number;
+    phone: string;
+    role?: UserRole;
+    registrationDate?: string;
+}
+
+export interface IAuthResponse {
+    success: boolean;
+    message: string;
+    data: {
+        user: IUser;
+        token: string;
+    };
+}

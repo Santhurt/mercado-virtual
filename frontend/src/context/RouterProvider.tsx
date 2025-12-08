@@ -6,6 +6,8 @@ import MerchantDashboardPage from "@/pages/MerchantDashboardPage";
 import CheckoutPage from "@/pages/CheckoutPage";
 import MessagesPage from "@/pages/MessagesPage";
 import AccountSettingsPage from "@/pages/AccountSettingsPage";
+import LoginPage from "@/pages/LoginPage";
+import RegisterPage from "@/pages/RegisterPage";
 import { createBrowserRouter } from "react-router-dom";
 
 
@@ -37,6 +39,14 @@ const router = createBrowserRouter([
     {
         path: "/settings",
         element: <AccountSettingsPage />
+    },
+    {
+        path: "/login",
+        element: <LoginPage />
+    },
+    {
+        path: "/register",
+        element: <RegisterPage />
     },
     {
         path: "*",
