@@ -1,16 +1,26 @@
+import mongoose from "mongoose";
 import Product from "../models/Product.js";
 import Seller from "../models/Seller.js";
 import { unlink } from "fs/promises";
 import { join, relative } from "path";
+import Category from "../models/Category.js";
 
 const MAX_PRODUCT_IMAGES = 5;
 
 const populateProduct = (queryOrDoc) =>
-    queryOrDoc.populate({
-        path: "seller",
-        select: "businessName accountStatus user",
-        populate: { path: "user", select: "-password" },
-    });
+    queryOrDoc.populate([
+        // Primera configuración: Popular Seller y su User
+        {
+            path: "seller",
+            select: "businessName accountStatus user",
+            populate: { path: "user", select: "-password" },
+        },
+        // Segunda configuración: Popular Categories
+        {
+            path: "categories",
+            select: "name slug",
+        },
+    ]);
 
 const removeUploadedFiles = async (files = []) => {
     await Promise.all(
@@ -42,12 +52,30 @@ const deleteStoredImages = async (imagePaths = []) => {
 // Obtener todos los productos
 export const getAllProducts = async (req, res) => {
     try {
-        const { page = 1, limit = 10, status, minPrice, maxPrice, sellerId } = req.query;
-        
+        const {
+            page = 1,
+            limit = 10,
+            status,
+            minPrice,
+            maxPrice,
+            sellerId,
+            categoryId,
+        } = req.query;
+
         // Construir filtros
         const filters = {};
         if (status) filters.status = status;
         if (sellerId) filters.seller = sellerId;
+
+        if (categoryId) {
+            return res.status(400).json({
+                success: false,
+                message: "ID de categoria no valido",
+            });
+        }
+
+        filters.categories = categoryId;
+
         if (minPrice || maxPrice) {
             filters.price = {};
             if (minPrice) filters.price.$gte = Number(minPrice);
@@ -119,17 +147,59 @@ export const getProductById = async (req, res) => {
 // Crear un nuevo producto
 export const createProduct = async (req, res) => {
     try {
-        const { sellerId, ...productData } = req.body;
+        const { sellerId, categories, ...productData } = req.body;
 
         // Validar campos requeridos
-        const requiredFields = ["title", "price", "status", "rating", "description", "stock", "sellerId"];
-        const missingFields = requiredFields.filter((field) => !req.body[field]);
+        const requiredFields = [
+            "title",
+            "price",
+            "status",
+            "rating",
+            "description",
+            "stock",
+            "sellerId",
+            "categories",
+        ];
+        const missingFields = requiredFields.filter(
+            (field) => !req.body[field],
+        );
 
         if (missingFields.length > 0) {
             return res.status(400).json({
                 success: false,
                 message: "Campos requeridos faltantes",
                 missingFields,
+            });
+        }
+
+        if (!Array.isArray(categories) || categories.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message:
+                    "El campo 'categories' debe ser un array de IDs de categoría y no puede estar vacío",
+            });
+        }
+
+        const validCategoryIds = categories.filter((id) =>
+            mongoose.Types.ObjectId.isValid(id),
+        );
+
+        const existingCategories = await Category.find({
+            _id: { $in: categories },
+        });
+
+        if (existingCategories.length !== categories.length) {
+            // Esto significa que uno o más IDs de categoría no existen
+            return res.status(400).json({
+                success: false,
+                message: "Una o más categorías proporcionadas no existen.",
+            });
+        }
+
+        if (validCategoryIds.length !== categories.length) {
+            return res.status(400).json({
+                success: false,
+                message: "El array 'categories' contiene IDs no válidos.",
             });
         }
 
@@ -149,7 +219,10 @@ export const createProduct = async (req, res) => {
         }
 
         // Validar que specifications sea un objeto si se proporciona
-        if (productData.specifications && typeof productData.specifications !== "object") {
+        if (
+            productData.specifications &&
+            typeof productData.specifications !== "object"
+        ) {
             return res.status(400).json({
                 success: false,
                 message: "El campo 'specifications' debe ser un objeto",
@@ -209,9 +282,66 @@ export const updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
         const updateData = req.body;
+        if (updateData.categories !== undefined) {
+            const categories = updateData.categories;
+
+            // 1. Validar que 'categories' sea un arreglo
+            if (!Array.isArray(categories)) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        "El campo 'categories' debe ser un array de IDs de categoría.",
+                });
+            }
+
+            // Si el arreglo está vacío, Mongoose lo manejará según la validación del esquema (required: true)
+
+            // 2. Validar que todos los IDs sean válidos y existan (solo si hay IDs)
+            if (categories.length > 0) {
+                const validCategoryIds = categories.filter((id) =>
+                    mongoose.Types.ObjectId.isValid(id),
+                );
+                if (validCategoryIds.length !== categories.length) {
+                    return res.status(400).json({
+                        success: false,
+                        message:
+                            "El array 'categories' contiene IDs no válidos.",
+                    });
+                }
+
+                const existingCategories = await Category.find({
+                    _id: { $in: categories },
+                });
+
+                if (existingCategories.length !== categories.length) {
+                    return res.status(400).json({
+                        success: false,
+                        message:
+                            "Una o más categorías proporcionadas no existen.",
+                    });
+                }
+
+                // Si todo es válido, la actualización se hace con el array de IDs
+                updateData.categories = existingCategories.map(
+                    (cat) => cat._id,
+                );
+            } else {
+                // Si el array está vacío, forzamos la validación del esquema.
+                // Si el esquema de Producto tiene 'required: true' en categories, esto fallará.
+                // Si quieres permitir 0 categorías, deberías cambiar el esquema.
+                // Como tiene 'required: true', devolvemos error antes de la BD.
+                return res.status(400).json({
+                    success: false,
+                    message: "Un producto debe tener al menos una categoría.",
+                });
+            }
+        }
 
         // Validar rating si se proporciona
-        if (updateData.rating !== undefined && (updateData.rating < 0 || updateData.rating > 5)) {
+        if (
+            updateData.rating !== undefined &&
+            (updateData.rating < 0 || updateData.rating > 5)
+        ) {
             return res.status(400).json({
                 success: false,
                 message: "El rating debe estar entre 0 y 5",
@@ -227,7 +357,10 @@ export const updateProduct = async (req, res) => {
         }
 
         // Validar que features y tags sean arrays si se proporcionan
-        if (updateData.features !== undefined && !Array.isArray(updateData.features)) {
+        if (
+            updateData.features !== undefined &&
+            !Array.isArray(updateData.features)
+        ) {
             return res.status(400).json({
                 success: false,
                 message: "El campo 'features' debe ser un array",
@@ -241,7 +374,10 @@ export const updateProduct = async (req, res) => {
             });
         }
 
-        if (updateData.seller !== undefined || updateData.sellerId !== undefined) {
+        if (
+            updateData.seller !== undefined ||
+            updateData.sellerId !== undefined
+        ) {
             return res.status(400).json({
                 success: false,
                 message: "El comerciante asociado no puede cambiarse",
@@ -295,7 +431,9 @@ export const deleteProduct = async (req, res) => {
         }
 
         if (product.seller) {
-            await Seller.findByIdAndUpdate(product.seller, { $pull: { products: product._id } });
+            await Seller.findByIdAndUpdate(product.seller, {
+                $pull: { products: product._id },
+            });
         }
 
         res.status(200).json({
@@ -344,7 +482,9 @@ export const uploadProductImages = async (req, res) => {
             });
         }
 
-        const relativePaths = files.map((file) => relative(process.cwd(), file.path));
+        const relativePaths = files.map((file) =>
+            relative(process.cwd(), file.path),
+        );
         product.images = [...currentImages, ...relativePaths];
         await product.save();
 
@@ -411,4 +551,3 @@ export const removeProductImage = async (req, res) => {
         });
     }
 };
-
