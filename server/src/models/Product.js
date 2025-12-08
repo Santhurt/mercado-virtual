@@ -8,7 +8,7 @@ const productSchema = new Schema(
             trim: true,
         },
         price: {
-            type: Number, 
+            type: Number,
             required: true,
         },
         originalPrice: {
@@ -74,6 +74,13 @@ const productSchema = new Schema(
             required: true,
             immutable: true,
         },
+        categories: [
+            {
+                type: Schema.Types.ObjectId,
+                ref: "Category",
+                required: true,
+            },
+        ],
     },
     { timestamps: true },
 );
