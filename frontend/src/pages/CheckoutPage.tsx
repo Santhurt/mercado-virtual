@@ -107,7 +107,7 @@ const CheckoutPage = () => {
     };
 
     const handleContinueShopping = () => {
-        navigate("/");
+        navigate("/home");
     };
 
     const goBack = () => {
