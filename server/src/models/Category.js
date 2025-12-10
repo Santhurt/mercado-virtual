@@ -20,12 +20,11 @@ const categorySchema = new Schema(
 );
 
 // Middleware para generar el slug antes de guardar (si lo deseas)
-categorySchema.pre("save", function (next) {
+categorySchema.pre("save", function () {
     if (this.isModified("name")) {
         // Simple slug generation: replace spaces with hyphens and convert to lowercase
         this.slug = this.name.split(" ").join("-").toLowerCase();
     }
-    next();
 });
 
 const Category = mongoose.model("Category", categorySchema);

@@ -154,7 +154,6 @@ export const createProduct = async (req, res) => {
             "title",
             "price",
             "status",
-            "rating",
             "description",
             "stock",
             "sellerId",
@@ -229,12 +228,13 @@ export const createProduct = async (req, res) => {
             });
         }
 
-        // Validar rating
-        if (productData.rating < 0 || productData.rating > 5) {
-            return res.status(400).json({
-                success: false,
-                message: "El rating debe estar entre 0 y 5",
-            });
+        if (productData.rating !== undefined) {
+            if (productData.rating < 0 || productData.rating > 5) {
+                return res.status(400).json({
+                    success: false,
+                    message: "El rating debe estar entre 0 y 5",
+                });
+            }
         }
 
         // Validar stock

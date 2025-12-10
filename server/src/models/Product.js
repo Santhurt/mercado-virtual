@@ -25,9 +25,10 @@ const productSchema = new Schema(
         },
         rating: {
             type: Number,
-            required: true,
+            required: false,
             min: 0,
             max: 5,
+            default: 0,
         },
         reviewCount: {
             type: Number,
