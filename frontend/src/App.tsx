@@ -1,4 +1,3 @@
-import { SidebarProvider } from "@/components/ui/sidebar";
 import { ThemeProvider } from "./context/theme-provider";
 import { CartProvider } from "./context/CartContext";
 import { AuthProvider } from "./context/AuthContext";
@@ -24,10 +23,8 @@ function App() {
                 <AuthProvider>
                     <ChatProvider>
                         <CartProvider>
-                            <SidebarProvider>
-                                <RouterProvider router={router} />
-                                <Toaster />
-                            </SidebarProvider>
+                            <RouterProvider router={router} />
+                            <Toaster />
                         </CartProvider>
                     </ChatProvider>
                 </AuthProvider>
