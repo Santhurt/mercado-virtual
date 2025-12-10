@@ -29,6 +29,8 @@ export interface ISellerProfile {
     _id: string;
     user: IUser;
     businessName: string;
+    description?: string;
+    logo?: string;
     accountStatus: string;
 }
 
@@ -39,6 +41,7 @@ export interface ISeller {
     user: string | IUser;
     businessName: string;
     description: string;
+    logo?: string;
     accountStatus: SellerAccountStatus;
     products: string[];
     createdAt: Date;
@@ -48,6 +51,7 @@ export interface ISeller {
 export interface ICreateSellerPayload {
     businessName: string;
     description?: string;
+    image?: File;
 }
 
 export interface IProduct {
@@ -205,11 +209,66 @@ export interface IRegisterPayload {
     registrationDate?: string;
 }
 
+// ===== COMMENT TYPES =====
+
+export interface IComment {
+    id: number | string;
+    user: string;
+    username: string;
+    avatar: string;
+    rating: number;
+    comment: string;
+    date: string;
+}
+
 export interface IAuthResponse {
     success: boolean;
     message: string;
     data: {
         user: IUser;
         token: string;
+    };
+}
+
+// ===== REVIEW TYPES =====
+
+export interface IReview {
+    _id: string;
+    productId: string;
+    userId: IUser;
+    rating: number;
+    comment: string;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+// ===== PRODUCT FILTER TYPES =====
+
+export interface IProductFilters {
+    status?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    sellerId?: string;
+    page?: number;
+    limit?: number;
+}
+
+export interface IProductsResponse {
+    products: IProduct[];
+    pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        pages: number;
+    };
+}
+
+export interface IReviewsResponse {
+    reviews: IReview[];
+    pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        pages: number;
     };
 }

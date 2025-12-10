@@ -55,16 +55,33 @@ export const userService = {
      * Create a seller profile for the user
      */
     async createSeller(userId: string, payload: ICreateSellerPayload, token: string): Promise<CreateSellerResponse> {
-        const response = await fetch(`${API_URL}/api/sellers`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`,
-            },
-            body: JSON.stringify({
+        let body: string | FormData;
+        const headers: HeadersInit = {
+            "Authorization": `Bearer ${token}`,
+        };
+
+        if (payload.image) {
+            const formData = new FormData();
+            formData.append("userId", userId);
+            formData.append("businessName", payload.businessName);
+            if (payload.description) {
+                formData.append("description", payload.description);
+            }
+            formData.append("image", payload.image);
+            body = formData;
+            // No contentType header for FormData, browser sets it with boundary
+        } else {
+            headers["Content-Type"] = "application/json";
+            body = JSON.stringify({
                 userId,
                 ...payload,
-            }),
+            });
+        }
+
+        const response = await fetch(`${API_URL}/api/sellers`, {
+            method: "POST",
+            headers,
+            body,
         });
 
         if (!response.ok) {

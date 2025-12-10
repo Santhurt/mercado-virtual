@@ -1,121 +1,137 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useParams } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
 // Importaciones de Componentes Reutilizables
 import ProductHeader from "@/components/custom/product/ProductHeader";
 import ProductFeaturesCard from "@/components/custom/product/ProductFeaturesCard";
 import ProductSpecificationsCard from "@/components/custom/product/ProductSpecsCard";
 import ProductCommentSection from "@/components/custom/product/ProductCommentSection";
+import { useProduct } from "@/hooks/useProducts";
+import { useProductReviews } from "@/hooks/useReviews";
+import { Card, CardContent } from "@/components/ui/card";
+import { Loader2, Package } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import type { IComment, IReview } from "@/types/AppTypes";
 
 const ProductDetailPage = () => {
+    const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
     const [comment, setComment] = useState("");
-    const [comments, setComments] = useState([
-        {
-            id: 1,
-            user: "María González",
-            username: "@maria_g",
-            avatar: "MG",
-            rating: 5,
-            comment:
-                "Excelente producto, llegó en perfectas condiciones y muy rápido.",
-            date: "Hace 2 días",
-        },
-        {
-            id: 2,
-            user: "Carlos Ramírez",
-            username: "@carlos_r",
-            avatar: "CR",
-            rating: 4,
-            comment:
-                "Muy buena calidad, aunque el envío tardó un poco más de lo esperado.",
-            date: "Hace 1 semana",
-        },
-        {
-            id: 3,
-            user: "Ana Martínez",
-            username: "@ana_m",
-            avatar: "AM",
-            rating: 5,
-            comment:
-                "Justo lo que esperaba. El vendedor es muy atento y respondió todas mis dudas.",
-            date: "Hace 2 semanas",
-        },
-    ]);
 
-    const product = {
-        title: "Zapatillas Running Pro Max",
-        price: "$89.99",
-        originalPrice: "$112.49",
-        discount: "20%",
-        status: "Nuevo",
-        rating: 4.8,
-        reviewCount: 156,
-        description:
-            "Zapatillas de alta performance diseñadas para corredores profesionales y amateur. Cuenta con tecnología de amortiguación avanzada, suela antideslizante y materiales respirables de primera calidad. Perfectas para entrenamientos intensivos y carreras de larga distancia.",
-        features: [
-            "Amortiguación de gel en talón y antepié",
-            "Suela de caucho resistente al desgaste",
-            "Upper de malla transpirable",
-            "Sistema de ajuste rápido",
-            "Peso ligero: 280g por zapato",
-        ],
-        specifications: {
-            marca: "ProSport",
-            modelo: "Running Pro Max 2024",
-            material: "Malla sintética + Caucho",
-            tallas: "35-45",
-            colores: "Negro, Azul, Rojo",
-        },
-        tags: ["Deporte", "Unisex", "Trending"],
-        stock: 15,
-        seller: {
-            name: "Usuario",
-            username: "@usuario",
-            rating: 4.8,
-            sales: 156,
-            location: "Pereira, Risaralda",
-            verified: true,
-        },
-    };
+    // Fetch product data
+    const { data: product, isLoading: isLoadingProduct, error: productError } = useProduct(id || "");
+
+    // Fetch reviews
+    const { data: reviewsData, isLoading: isLoadingReviews } = useProductReviews(id || "");
+
+    // Transform API reviews to IComment format for ProductCommentSection
+    const comments: IComment[] = useMemo(() => {
+        if (!reviewsData?.reviews) return [];
+        return reviewsData.reviews.map((review: IReview) => ({
+            id: review._id,
+            user: review.userId?.fullName || "Usuario",
+            username: `@${(review.userId?.fullName || "usuario").toLowerCase().replace(/\s+/g, '_')}`,
+            avatar: (review.userId?.fullName || "U").substring(0, 2).toUpperCase(),
+            rating: review.rating,
+            comment: review.comment,
+            date: new Date(review.createdAt).toLocaleDateString('es-CO', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            }),
+        }));
+    }, [reviewsData?.reviews]);
 
     const handleAddComment = () => {
         if (comment.trim()) {
-            const newComment = {
-                id: comments.length + 1,
-                user: "Tú",
-                username: "@tu_usuario",
-                avatar: "TU",
-                rating: 5,
-                comment: comment,
-                date: "Ahora mismo",
-            };
-            setComments([newComment, ...comments]);
+            // TODO: Implement API call to add review
+            console.log("Adding comment:", comment);
             setComment("");
         }
     };
 
-    // Se elimina la función renderStars ya que se movió al componente RatingStars.jsx
+    // Loading state
+    if (isLoadingProduct) {
+        return (
+            <MainLayout>
+                <div className="flex justify-center items-center py-32">
+                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                </div>
+            </MainLayout>
+        );
+    }
+
+    // Error state
+    if (productError || !product) {
+        return (
+            <MainLayout>
+                <Card className="border-dashed">
+                    <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                        <div className="rounded-full bg-muted p-4 mb-4">
+                            <Package className="h-10 w-10 text-muted-foreground" />
+                        </div>
+                        <h3 className="font-semibold text-lg mb-2">
+                            Producto no encontrado
+                        </h3>
+                        <p className="text-sm text-muted-foreground max-w-sm mb-4">
+                            El producto que buscas no existe o ha sido eliminado.
+                        </p>
+                        <Button onClick={() => navigate('/home')}>
+                            Volver al inicio
+                        </Button>
+                    </CardContent>
+                </Card>
+            </MainLayout>
+        );
+    }
+
+    // Transform product for ProductHeader - format price as string since that's what it expects
+    const productForHeader = {
+        ...product,
+        price: new Intl.NumberFormat('es-CO', {
+            style: 'currency',
+            currency: 'COP',
+            minimumFractionDigits: 0,
+        }).format(product.price),
+        originalPrice: product.originalPrice
+            ? new Intl.NumberFormat('es-CO', {
+                style: 'currency',
+                currency: 'COP',
+                minimumFractionDigits: 0,
+            }).format(Number(product.originalPrice))
+            : undefined,
+    };
 
     return (
         <MainLayout>
             <div className="space-y-6">
                 {/* 1. Encabezado e Información Principal del Producto */}
-                <ProductHeader product={product} />
+                <ProductHeader product={productForHeader as any} />
 
                 {/* 2. Detalles y Especificaciones */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <ProductFeaturesCard features={product.features} />
+                    <ProductFeaturesCard features={product.features || []} />
                     <ProductSpecificationsCard
-                        specifications={product.specifications}
+                        specifications={product.specifications || {}}
                     />
                 </div>
 
                 {/* 3. Sección de Comentarios */}
-                <ProductCommentSection
-                    comments={comments}
-                    comment={comment}
-                    setComment={setComment}
-                    handleAddComment={handleAddComment}
-                />
+                {isLoadingReviews ? (
+                    <Card>
+                        <CardContent className="flex justify-center py-8">
+                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                        </CardContent>
+                    </Card>
+                ) : (
+                    <ProductCommentSection
+                        comments={comments}
+                        comment={comment}
+                        setComment={setComment}
+                        handleAddComment={handleAddComment}
+                    />
+                )}
             </div>
         </MainLayout>
     );

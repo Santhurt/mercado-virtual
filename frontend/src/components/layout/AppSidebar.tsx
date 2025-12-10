@@ -48,7 +48,7 @@ const AppSidebar = ({ activeItem, setActiveItem }: Props) => {
     const logout = useLogout();
 
     const mainMenu: MenuItem[] = [
-        { id: "home", label: "Inicio", icon: Home, to: "/" },
+        { id: "home", label: "Inicio", icon: Home, to: "/home" },
         {
             id: "productos",
             label: "Productos",

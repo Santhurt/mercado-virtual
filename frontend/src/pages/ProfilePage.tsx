@@ -24,35 +24,44 @@ const ProfilePage = () => {
         rating: 4.8,
     };
 
+    // Mock products with updated props format
     const products = [
         {
+            _id: "mock_1",
             title: "Zapatillas Running Pro Max",
-            price: "$89.99",
+            price: 89990,
             status: "Nuevo",
-            discount: "20%",
+            discount: 20,
             rating: 4.8,
+            reviewCount: 45,
             tags: ["Deporte", "Unisex", "Trending"],
         },
         {
+            _id: "mock_2",
             title: "Camiseta Deportiva Premium Fit",
-            price: "$34.99",
+            price: 34990,
             status: "Popular",
             rating: 4.6,
+            reviewCount: 32,
             tags: ["Fitness", "Algodón", "Eco"],
         },
         {
+            _id: "mock_3",
             title: "Mochila Urbana Impermeable 30L",
-            price: "$59.99",
+            price: 59990,
             status: "Oferta",
-            discount: "15%",
+            discount: 15,
             rating: 4.9,
+            reviewCount: 67,
             tags: ["Travel", "Laptop", "Resistente"],
         },
         {
+            _id: "mock_4",
             title: "Reloj Inteligente Fitness Pro",
-            price: "$199.99",
+            price: 199990,
             status: "Destacado",
             rating: 4.7,
+            reviewCount: 128,
             tags: ["Tech", "Salud", "GPS"],
         },
     ];
@@ -75,8 +84,8 @@ const ProfilePage = () => {
 
                     <TabsContent value="productos" className="mt-6">
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {products.map((product, index) => (
-                                <ProductCard key={index} {...product} />
+                            {products.map((product) => (
+                                <ProductCard key={product._id} {...product} />
                             ))}
                         </div>
                     </TabsContent>

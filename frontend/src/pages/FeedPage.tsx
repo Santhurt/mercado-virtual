@@ -1,4 +1,3 @@
-import CategoryPill from "@/components/custom/CategoryPill";
 import ProductCard from "@/components/custom/ProductCard";
 import PromoBanner from "@/components/custom/PromoBanner";
 import MainLayout from "@/components/layout/MainLayout";
@@ -6,86 +5,88 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import {
     Package,
     Sparkles,
     Heart,
     Search,
-    Shirt,
-    Home,
-    Dumbbell,
-    Smartphone,
-    Gamepad,
-    Watch,
     Bell,
     ShoppingCart,
+    Loader2,
+    Filter,
+    X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useCart } from "../context/CartContext";
+import { useState, useMemo } from "react";
+import { useProductsFiltered } from "@/hooks/useProducts";
+import { useCategories } from "@/hooks/useCategories";
+import type { IProduct, IProductFilters, ICategory } from "@/types/AppTypes";
 
 const FeedPage = () => {
-    const { addItem } = useCart();
-    useEffect(() => {
-        addItem({ productId: "123", title: "Producto", price: 25000 });
-    }, [])
     const [activeTab, setActiveTab] = useState("productos");
-    const [activeCategory, setActiveCategory] = useState("Todo");
+    const [activeCategory, setActiveCategory] = useState<string>("all");
+    const [searchQuery, setSearchQuery] = useState("");
+    const [showFilters, setShowFilters] = useState(false);
 
-    const categories = [
-        { label: "Todo", icon: Package },
-        { label: "Tecnología", icon: Smartphone },
-        { label: "Ropa", icon: Shirt },
-        { label: "Hogar", icon: Home },
-        { label: "Deportes", icon: Dumbbell },
-        { label: "Gaming", icon: Gamepad },
-        { label: "Accesorios", icon: Watch },
-    ];
+    // Filter states
+    const [filters, setFilters] = useState<IProductFilters>({
+        limit: 20,
+    });
+    const [minPrice, setMinPrice] = useState("");
+    const [maxPrice, setMaxPrice] = useState("");
+    const [statusFilter, setStatusFilter] = useState<string>("all");
 
-    const products = [
-        {
-            title: "iPhone 15 Pro Max - Nuevo en caja",
-            price: "$1,299",
-            status: "Nuevo",
-            rating: 4.8,
-            tags: ["Electrónica", "Apple", "Garantía"],
-        },
-        {
-            title: "Lote de ropa de marca - 50 piezas",
-            price: "$2,500",
-            status: "Mayorista",
-            rating: 4.5,
-            tags: ["Ropa", "Lote", "Negocio"],
-        },
-        {
-            title: "Laptop Gaming RTX 4070",
-            price: "$1,799",
-            status: "Usado - Como nuevo",
-            rating: 4.9,
-            tags: ["Gaming", "Laptop", "High-End"],
-        },
-        {
-            title: "Sony WH-1000XM5",
-            price: "$349",
-            status: "Oferta",
-            discount: "15%",
-            rating: 4.7,
-            tags: ["Audio", "Sony", "Noise Cancelling"],
-        },
-        {
-            title: "Nike Air Jordan 1 High",
-            price: "$180",
-            status: "Nuevo",
-            rating: 4.6,
-            tags: ["Moda", "Sneakers", "Original"],
-        },
-        {
-            title: "Smart TV Samsung 55' 4K",
-            price: "$499",
-            status: "Reacondicionado",
-            rating: 4.3,
-            tags: ["Hogar", "TV", "Samsung"],
-        },
-    ];
+    // Fetch products with filters
+    const { data: productsData, isLoading, error } = useProductsFiltered(filters);
+    const { data: categories = [] } = useCategories();
+
+    // Apply filters
+    const applyFilters = () => {
+        const newFilters: IProductFilters = {
+            limit: 20,
+        };
+        if (minPrice) newFilters.minPrice = Number(minPrice);
+        if (maxPrice) newFilters.maxPrice = Number(maxPrice);
+        if (statusFilter !== "all") newFilters.status = statusFilter;
+        setFilters(newFilters);
+    };
+
+    const clearFilters = () => {
+        setMinPrice("");
+        setMaxPrice("");
+        setStatusFilter("all");
+        setFilters({ limit: 20 });
+    };
+
+    // Client-side filtering for search and category
+    const filteredProducts = useMemo(() => {
+        if (!productsData?.products) return [];
+
+        return productsData.products.filter((product: IProduct) => {
+            // Search filter (client-side)
+            const matchesSearch = searchQuery === "" ||
+                product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                product.description?.toLowerCase().includes(searchQuery.toLowerCase());
+
+            // Category filter (client-side)
+            const matchesCategory = activeCategory === "all" ||
+                (product.categories as ICategory[])?.some(
+                    (cat) => cat._id === activeCategory || cat.name === activeCategory
+                );
+
+            return matchesSearch && matchesCategory;
+        });
+    }, [productsData?.products, searchQuery, activeCategory]);
+
+    const hasActiveFilters = minPrice || maxPrice || statusFilter !== "all";
 
     return (
         <MainLayout>
@@ -95,11 +96,21 @@ const FeedPage = () => {
                     <div className="relative w-full md:max-w-xl">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
-                            placeholder="Buscar productos, marcas o categorías..."
+                            placeholder="Buscar productos..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                             className="pl-10 h-11 rounded-full bg-muted/40 border-transparent focus:bg-background transition-colors"
                         />
                     </div>
                     <div className="flex items-center gap-2">
+                        <Button
+                            variant={showFilters ? "default" : "ghost"}
+                            size="icon"
+                            className="rounded-full"
+                            onClick={() => setShowFilters(!showFilters)}
+                        >
+                            <Filter className="h-5 w-5" />
+                        </Button>
                         <Button
                             variant="ghost"
                             size="icon"
@@ -117,26 +128,100 @@ const FeedPage = () => {
                     </div>
                 </div>
 
+                {/* Filters Panel */}
+                {showFilters && (
+                    <Card className="animate-in slide-in-from-top-2 duration-200">
+                        <CardContent className="pt-6">
+                            <div className="flex flex-wrap gap-6 items-end">
+                                {/* Status Filter */}
+                                <div className="space-y-2 min-w-[150px]">
+                                    <Label>Estado</Label>
+                                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Todos" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">Todos</SelectItem>
+                                            <SelectItem value="Available">Disponible</SelectItem>
+                                            <SelectItem value="Out of Stock">Agotado</SelectItem>
+                                            <SelectItem value="Discontinued">Descontinuado</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                {/* Price Range */}
+                                <div className="space-y-2">
+                                    <Label>Precio mínimo</Label>
+                                    <Input
+                                        type="number"
+                                        placeholder="0"
+                                        value={minPrice}
+                                        onChange={(e) => setMinPrice(e.target.value)}
+                                        className="w-32"
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label>Precio máximo</Label>
+                                    <Input
+                                        type="number"
+                                        placeholder="Sin límite"
+                                        value={maxPrice}
+                                        onChange={(e) => setMaxPrice(e.target.value)}
+                                        className="w-32"
+                                    />
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="flex gap-2">
+                                    <Button onClick={applyFilters}>
+                                        Aplicar filtros
+                                    </Button>
+                                    {hasActiveFilters && (
+                                        <Button variant="ghost" onClick={clearFilters}>
+                                            <X className="h-4 w-4 mr-1" />
+                                            Limpiar
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
                 {/* Promo Banner */}
                 <PromoBanner />
 
-                {/* Categories Scroll */}
+                {/* Categories from API */}
                 <div className="space-y-3">
                     <div className="flex items-center justify-between">
                         <h3 className="font-semibold text-lg">Categorías</h3>
-                        <Button variant="link" className="text-primary h-auto p-0">
-                            Ver todas
-                        </Button>
+                        {hasActiveFilters && (
+                            <Badge variant="secondary" className="gap-1">
+                                <Filter className="h-3 w-3" />
+                                Filtros activos
+                            </Badge>
+                        )}
                     </div>
                     <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
-                        {categories.map((cat) => (
-                            <CategoryPill
-                                key={cat.label}
-                                icon={cat.icon}
-                                label={cat.label}
-                                isActive={activeCategory === cat.label}
-                                onClick={() => setActiveCategory(cat.label)}
-                            />
+                        <Button
+                            variant={activeCategory === "all" ? "default" : "outline"}
+                            size="sm"
+                            className="rounded-full whitespace-nowrap"
+                            onClick={() => setActiveCategory("all")}
+                        >
+                            Todos
+                        </Button>
+                        {categories.map((cat: ICategory) => (
+                            <Button
+                                key={cat._id}
+                                variant={activeCategory === cat._id ? "default" : "outline"}
+                                size="sm"
+                                className="rounded-full whitespace-nowrap"
+                                onClick={() => setActiveCategory(cat._id)}
+                            >
+                                {cat.name}
+                            </Button>
                         ))}
                     </div>
                 </div>
@@ -170,11 +255,63 @@ const FeedPage = () => {
                     </div>
 
                     <TabsContent value="productos" className="mt-0">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                            {products.map((product, index) => (
-                                <ProductCard key={index} {...product} />
-                            ))}
-                        </div>
+                        {isLoading ? (
+                            <div className="flex justify-center items-center py-16">
+                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                            </div>
+                        ) : error ? (
+                            <Card className="border-destructive/50 bg-destructive/10">
+                                <CardContent className="py-8 text-center">
+                                    <p className="text-destructive font-medium">
+                                        Error al cargar los productos
+                                    </p>
+                                    <p className="text-sm text-muted-foreground mt-1">
+                                        Por favor, intenta de nuevo más tarde.
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        ) : filteredProducts.length === 0 ? (
+                            <Card className="border-dashed bg-muted/20">
+                                <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+                                    <div className="rounded-full bg-background p-4 mb-4 shadow-sm">
+                                        <Package className="h-10 w-10 text-muted-foreground" />
+                                    </div>
+                                    <h3 className="font-semibold text-lg mb-2">
+                                        No hay productos
+                                    </h3>
+                                    <p className="text-sm text-muted-foreground max-w-sm">
+                                        {searchQuery || hasActiveFilters
+                                            ? "No se encontraron productos con los filtros seleccionados."
+                                            : "Aún no hay productos disponibles."}
+                                    </p>
+                                    {(searchQuery || hasActiveFilters) && (
+                                        <Button variant="outline" className="mt-4" onClick={() => {
+                                            setSearchQuery("");
+                                            clearFilters();
+                                        }}>
+                                            Limpiar búsqueda
+                                        </Button>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                {filteredProducts.map((product: IProduct) => (
+                                    <ProductCard
+                                        key={product._id}
+                                        _id={product._id}
+                                        title={product.title}
+                                        price={product.price}
+                                        status={product.status}
+                                        rating={product.rating}
+                                        reviewCount={product.reviewCount}
+                                        tags={product.tags}
+                                        images={product.images}
+                                        discount={product.discount}
+                                    />
+                                ))}
+                            </div>
+                        )}
                     </TabsContent>
 
                     <TabsContent value="ofertas" className="mt-0">

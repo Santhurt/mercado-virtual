@@ -16,42 +16,90 @@ import {
     TooltipTrigger,
     TooltipContent,
 } from "@/components/ui/tooltip";
+import { useNavigate } from "react-router-dom";
+import { getFirstImageUrl } from "@/lib/imageUtils";
 
 type ProductCardProps = {
+    _id: string;
     title: string;
-    price: string;
+    price: number;
     status: string;
-    discount?: string;
+    discount?: number | string;
     rating?: number;
+    reviewCount?: number;
     tags?: string[];
+    image?: string;
+    images?: string[];
+};
+
+const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat('es-CO', {
+        style: 'currency',
+        currency: 'COP',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+    }).format(amount);
 };
 
 const ProductCard = ({
+    _id,
     title,
     price,
     status,
     discount,
-    rating = 4.5,
+    rating = 0,
+    reviewCount = 0,
     tags = [],
+    image,
+    images,
 }: ProductCardProps) => {
     const [isFavorite, setIsFavorite] = useState(false);
+    const navigate = useNavigate();
+
+    // Get image URL - prefer explicit image prop, then first from images array
+    const displayImage = image || getFirstImageUrl(images);
+    const hasValidImage = displayImage && !displayImage.includes("placehold.co");
+
+    const handleViewProduct = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        navigate(`/product/${_id}`);
+    };
+
+    const handleCardClick = () => {
+        navigate(`/product/${_id}`);
+    };
+
+    // Calculate original price if there's a discount
+    const discountValue = typeof discount === 'string' ? parseFloat(discount) : discount;
+    const originalPrice = discountValue ? price / (1 - discountValue / 100) : null;
 
     return (
-        <Card className="group overflow-hidden hover:shadow-lg cursor-pointer">
-            {/* Sección de Imagen/Icono con efecto de zoom */}
+        <Card
+            className="group overflow-hidden hover:shadow-lg cursor-pointer"
+            onClick={handleCardClick}
+        >
+            {/* Sección de Imagen con efecto de zoom */}
             <div className="relative aspect-square bg-muted flex items-center justify-center overflow-hidden">
                 {/* Fondo animado con zoom */}
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-primary/10 group-hover:scale-110 transition-transform duration-700" />
 
-                {/* Icono principal con zoom */}
-                <ShoppingBag className="relative h-16 w-16 text-muted-foreground group-hover:scale-125 group-hover:text-primary transition-all duration-500 z-10" />
+                {/* Imagen del producto o icono fallback */}
+                {hasValidImage ? (
+                    <img
+                        src={displayImage}
+                        alt={title}
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                ) : (
+                    <ShoppingBag className="relative h-16 w-16 text-muted-foreground group-hover:scale-125 group-hover:text-primary transition-all duration-500 z-10" />
+                )}
 
                 {/* Badges y controles superiores */}
                 <div className="absolute top-3 left-3 right-3 flex justify-between items-start z-20">
                     <div className="flex gap-2 flex-wrap">
-                        {discount && (
+                        {discountValue && (
                             <Badge variant="destructive" className="shadow-lg">
-                                -{discount}
+                                -{discountValue}%
                             </Badge>
                         )}
                         <Badge variant="secondary" className="shadow-lg">
@@ -70,11 +118,10 @@ const ProductCard = ({
                         }}
                     >
                         <Heart
-                            className={`h-4 w-4 transition-colors ${
-                                isFavorite
+                            className={`h-4 w-4 transition-colors ${isFavorite
                                     ? "fill-destructive text-destructive"
                                     : ""
-                            }`}
+                                }`}
                         />
                     </Button>
                 </div>
@@ -98,16 +145,15 @@ const ProductCard = ({
                         {[...Array(5)].map((_, i) => (
                             <Star
                                 key={i}
-                                className={`h-3.5 w-3.5 ${
-                                    i < Math.floor(rating)
+                                className={`h-3.5 w-3.5 ${i < Math.floor(rating)
                                         ? "fill-yellow-500 text-yellow-500 dark:fill-yellow-400 dark:text-yellow-400"
                                         : "fill-muted text-muted-foreground"
-                                }`}
+                                    }`}
                             />
                         ))}
                     </div>
-                    <span className="font-medium">{rating}</span>
-                    <span className="text-xs text-muted-foreground">(128)</span>
+                    <span className="font-medium">{rating.toFixed(1)}</span>
+                    <span className="text-xs text-muted-foreground">({reviewCount})</span>
                 </CardDescription>
             </CardHeader>
 
@@ -115,7 +161,7 @@ const ProductCard = ({
                 {/* Tags de producto */}
                 {tags.length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
-                        {tags.map((tag, index) => (
+                        {tags.slice(0, 3).map((tag, index) => (
                             <Badge
                                 key={index}
                                 variant="outline"
@@ -130,17 +176,13 @@ const ProductCard = ({
                 <Separator />
                 <div className="flex items-center justify-between">
                     <div className="flex flex-col leading-tight">
-                        {discount && (
+                        {originalPrice && (
                             <p className="text-xs text-muted-foreground line-through">
-                                $
-                                {(
-                                    parseFloat(price.replace(/[^0-9.]/g, "")) *
-                                    1.3
-                                ).toFixed(2)}
+                                {formatCurrency(originalPrice)}
                             </p>
                         )}
                         <p className="text-2xl font-bold tracking-tight">
-                            {price}
+                            {formatCurrency(price)}
                         </p>
                         <p className="text-xs text-muted-foreground">
                             Envío gratis
@@ -153,6 +195,7 @@ const ProductCard = ({
                             <TooltipTrigger asChild>
                                 <Button
                                     className="rounded-full shadow-sm hover:scale-110 transition px-4 py-2 flex items-center gap-2"
+                                    onClick={handleViewProduct}
                                 >
                                     <ShoppingBag className="h-5 w-5" />
                                     Ver
@@ -169,5 +212,4 @@ const ProductCard = ({
     );
 };
 
-// Demo con múltiples productos y toggle de modo oscuro
 export default ProductCard;

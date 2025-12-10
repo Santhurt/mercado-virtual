@@ -1,4 +1,4 @@
-import type { IProduct, ICreateProductPayload, IUpdateProductPayload } from "@/types/AppTypes";
+import type { IProduct, ICreateProductPayload, IUpdateProductPayload, IProductFilters, IProductsResponse } from "@/types/AppTypes";
 
 const API_URL = import.meta.env.VITE_API_URL;
 const AUTH_STORAGE_KEY = "mercafacil_auth";
@@ -29,6 +29,23 @@ export const productService = {
             return data.data.products;
         }
         return data.data || data;
+    },
+
+    async getProductsWithFilters(filters: IProductFilters): Promise<IProductsResponse> {
+        const params = new URLSearchParams();
+        if (filters.status) params.append('status', filters.status);
+        if (filters.minPrice !== undefined) params.append('minPrice', String(filters.minPrice));
+        if (filters.maxPrice !== undefined) params.append('maxPrice', String(filters.maxPrice));
+        if (filters.sellerId) params.append('sellerId', filters.sellerId);
+        if (filters.page) params.append('page', String(filters.page));
+        if (filters.limit) params.append('limit', String(filters.limit));
+
+        const response = await fetch(`${API_URL}/api/products?${params.toString()}`, {
+            headers: getAuthHeaders(),
+        });
+        if (!response.ok) throw new Error("Error fetching products");
+        const data = await response.json();
+        return data.data;
     },
 
     async getProduct(id: string): Promise<IProduct> {

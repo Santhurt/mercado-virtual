@@ -1,11 +1,18 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { productService } from "@/services/products";
-import type { ICreateProductPayload, IUpdateProductPayload } from "@/types/AppTypes";
+import type { ICreateProductPayload, IUpdateProductPayload, IProductFilters } from "@/types/AppTypes";
 
 export const useProducts = () => {
     return useQuery({
         queryKey: ["products"],
         queryFn: productService.getProducts,
+    });
+};
+
+export const useProductsFiltered = (filters: IProductFilters) => {
+    return useQuery({
+        queryKey: ["products", "filtered", filters],
+        queryFn: () => productService.getProductsWithFilters(filters),
     });
 };
 

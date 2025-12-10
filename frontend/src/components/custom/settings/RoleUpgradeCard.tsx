@@ -65,11 +65,22 @@ const RoleUpgradeCard = ({ currentRole, onUpgrade }: RoleUpgradeCardProps) => {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [businessName, setBusinessName] = useState("");
     const [description, setDescription] = useState("");
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     const becomeSeller = useBecomeSeller();
 
     const isSeller = currentRole === "seller" || currentRole === "admin";
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setImageFile(file);
+            const url = URL.createObjectURL(file);
+            setPreviewUrl(url);
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -84,11 +95,14 @@ const RoleUpgradeCard = ({ currentRole, onUpgrade }: RoleUpgradeCardProps) => {
             await becomeSeller.mutateAsync({
                 businessName: businessName.trim(),
                 description: description.trim() || undefined,
+                image: imageFile || undefined,
             });
 
             setIsDialogOpen(false);
             setBusinessName("");
             setDescription("");
+            setImageFile(null);
+            setPreviewUrl(null);
             onUpgrade?.();
         } catch (err) {
             setError(err instanceof Error ? err.message : "Error al convertirse en vendedor");
@@ -265,6 +279,27 @@ const RoleUpgradeCard = ({ currentRole, onUpgrade }: RoleUpgradeCardProps) => {
                                 onChange={(e) => setDescription(e.target.value)}
                                 disabled={becomeSeller.isPending}
                             />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="logo">Logo del Negocio (opcional)</Label>
+                            <div className="flex items-center gap-4">
+                                {previewUrl && (
+                                    <img
+                                        src={previewUrl}
+                                        alt="Preview"
+                                        className="h-12 w-12 rounded-full object-cover border"
+                                    />
+                                )}
+                                <Input
+                                    id="logo"
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleFileChange}
+                                    disabled={becomeSeller.isPending}
+                                    className="cursor-pointer"
+                                />
+                            </div>
                         </div>
 
                         {error && (
