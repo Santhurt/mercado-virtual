@@ -145,6 +145,7 @@ export interface IOrder {
     history: IOrderHistoryEntry[];
     createdAt: Date;
     updatedAt: Date;
+    sellerSubtotal?: number; // Added by /orders/seller/:sellerId endpoint
 }
 
 // ===== CART TYPES =====
