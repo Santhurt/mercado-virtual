@@ -1,4 +1,4 @@
-import { Package, MapPin, Truck } from "lucide-react";
+import { Package, MapPin, Truck, Loader2, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,8 @@ interface OrderSummaryProps {
     onBack?: () => void;
     showActions?: boolean;
     isReviewStep?: boolean;
+    isLoading?: boolean;
+    error?: string | null;
 }
 
 const paymentMethodLabels: Record<PaymentMethod, string> = {
@@ -35,6 +37,8 @@ const OrderSummary = ({
     onBack,
     showActions = false,
     isReviewStep = false,
+    isLoading = false,
+    error = null,
 }: OrderSummaryProps) => {
     const taxes = subtotal * taxRate;
     const total = subtotal + shippingCost + taxes;
@@ -145,9 +149,27 @@ const OrderSummary = ({
 
                 {/* Actions */}
                 {showActions && (
-                    <div className="space-y-2 pt-2">
-                        <Button onClick={onConfirm} className="w-full" size="lg">
-                            Confirmar Pedido
+                    <div className="space-y-3 pt-2">
+                        {error && (
+                            <div className="flex items-center gap-2 text-destructive text-sm bg-destructive/10 p-3 rounded-md">
+                                <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                                {error}
+                            </div>
+                        )}
+                        <Button
+                            onClick={onConfirm}
+                            className="w-full"
+                            size="lg"
+                            disabled={isLoading}
+                        >
+                            {isLoading ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    Procesando...
+                                </>
+                            ) : (
+                                "Confirmar Pedido"
+                            )}
                         </Button>
                         {onBack && (
                             <Button
@@ -155,6 +177,7 @@ const OrderSummary = ({
                                 onClick={onBack}
                                 className="w-full"
                                 size="sm"
+                                disabled={isLoading}
                             >
                                 Volver
                             </Button>

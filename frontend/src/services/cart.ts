@@ -9,6 +9,7 @@ export interface IAddToCartPayload {
     price: number;
     quantity: number;
     image?: string;
+    seller: string;
 }
 
 export interface IUpdateCartItemPayload {

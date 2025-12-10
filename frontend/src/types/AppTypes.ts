@@ -111,6 +111,7 @@ export interface IOrderProduct {
     quantity: number;
     subtotal: number;
     image?: string;
+    seller: string;
 }
 
 export interface IShippingAddress {
@@ -156,6 +157,7 @@ export interface ICartItem {
     price: number;
     quantity: number;
     image?: string;
+    seller: string;
 }
 
 export interface ICart {

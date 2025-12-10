@@ -85,6 +85,7 @@ export const CartProvider = ({ children }: CartProviderProps) => {
                 price: item.price,
                 quantity: item.quantity || 1,
                 image: item.image,
+                seller: item.seller,
             }, token);
             setItems(cart.items || []);
         } catch (err) {

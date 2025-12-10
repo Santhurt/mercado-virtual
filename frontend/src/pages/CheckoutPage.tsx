@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/context/CartContext";
+import { useAuthContext } from "@/context/AuthContext";
 import {
     ShippingForm,
     PaymentMethodSelector,
@@ -17,6 +18,7 @@ import type {
     IPaymentDetails,
 } from "@/types/AppTypes";
 import { cn } from "@/lib/utils";
+import { orderService, type ICreateOrderPayload } from "@/services/orders";
 
 const steps: { id: CheckoutStep; label: string }[] = [
     { id: "shipping", label: "Envío" },
@@ -25,17 +27,29 @@ const steps: { id: CheckoutStep; label: string }[] = [
     { id: "confirmation", label: "Confirmación" },
 ];
 
+// Constants for order calculation
+const SHIPPING_COST = 8000;
+const TAX_RATE = 0.19;
+
 const CheckoutPage = () => {
     const navigate = useNavigate();
     const { items, totalPrice, clearCart, closeCart } = useCart();
+    const { user, token, isAuthenticated } = useAuthContext();
 
     const [currentStep, setCurrentStep] = useState<CheckoutStep>("shipping");
     const [shippingAddress, setShippingAddress] = useState<IShippingAddress | null>(null);
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
     const [paymentDetails, setPaymentDetails] = useState<IPaymentDetails | null>(null);
     const [orderNumber, setOrderNumber] = useState<string>("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState<string | null>(null);
 
     const currentStepIndex = steps.findIndex((s) => s.id === currentStep);
+
+    // Calculate order totals
+    const subtotal = totalPrice;
+    const taxes = subtotal * TAX_RATE;
+    const total = subtotal + SHIPPING_COST + taxes;
 
     const handleShippingSubmit = (data: IShippingAddress) => {
         setShippingAddress(data);
@@ -46,13 +60,50 @@ const CheckoutPage = () => {
         setCurrentStep("review");
     };
 
-    const handleConfirmOrder = () => {
-        // Generate random order number
-        const newOrderNumber = `ORD-${Date.now().toString(36).toUpperCase()}`;
-        setOrderNumber(newOrderNumber);
-        clearCart();
-        closeCart();
-        setCurrentStep("confirmation");
+    const handleConfirmOrder = async () => {
+        if (!isAuthenticated || !user || !token || !shippingAddress) {
+            setSubmitError("Debes iniciar sesión para realizar el pedido");
+            return;
+        }
+
+        setIsSubmitting(true);
+        setSubmitError(null);
+
+        try {
+            // Build order payload from cart items
+            const orderPayload: ICreateOrderPayload = {
+                customerId: user._id,
+                products: items.map((item) => ({
+                    productId: item.productId,
+                    title: item.title,
+                    unitPrice: item.price,
+                    quantity: item.quantity,
+                    subtotal: item.price * item.quantity,
+                    image: item.image,
+                    seller: item.seller,
+                })),
+                subtotal,
+                shippingCost: SHIPPING_COST,
+                taxes: Math.round(taxes),
+                discount: 0,
+                total: Math.round(total),
+                shippingAddress,
+                deliveryMethod: "delivery",
+                paymentMethod: paymentMethod || undefined,
+            };
+
+            const createdOrder = await orderService.createOrder(orderPayload, token);
+
+            setOrderNumber(createdOrder._id);
+            await clearCart();
+            closeCart();
+            setCurrentStep("confirmation");
+        } catch (err) {
+            console.error("Error creating order:", err);
+            setSubmitError(err instanceof Error ? err.message : "Error al crear la orden");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const handleContinueShopping = () => {
@@ -161,6 +212,7 @@ const CheckoutPage = () => {
                 {currentStep === "confirmation" ? (
                     <OrderConfirmation
                         orderNumber={orderNumber}
+                        email={user?.email}
                         onContinueShopping={handleContinueShopping}
                     />
                 ) : (
@@ -203,6 +255,8 @@ const CheckoutPage = () => {
                                         showActions={true}
                                         onConfirm={handleConfirmOrder}
                                         onBack={goBack}
+                                        isLoading={isSubmitting}
+                                        error={submitError}
                                     />
                                 </div>
                             )}
@@ -222,6 +276,8 @@ const CheckoutPage = () => {
                                 showActions={currentStep === "review"}
                                 onConfirm={handleConfirmOrder}
                                 onBack={goBack}
+                                isLoading={isSubmitting}
+                                error={submitError}
                             />
                         </div>
                     </div>

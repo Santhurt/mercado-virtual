@@ -62,8 +62,11 @@ const ProductHeader = ({ product }: ProductHeaderProps) => {
                 productId: product._id,
                 title: product.title,
                 price: rawPrice,
-                image: product.images?.[0] || undefined,
+                image: product.images?.[0]
+                    ? `${import.meta.env.VITE_API_URL}/${product.images[0]}`
+                    : undefined,
                 quantity,
+                seller: product.seller?._id || "",
             });
             setAddStatus("success");
             setTimeout(() => {
