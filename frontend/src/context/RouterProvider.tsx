@@ -1,7 +1,7 @@
 import FeedPage from "@/pages/FeedPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 import ProductDetailPage from "@/pages/ProductDetailPage";
-import ProfilePage from "@/pages/ProfilePage";
+import SellerProfilePage from "@/pages/SellerProfilePage";
 import MerchantDashboardPage from "@/pages/MerchantDashboardPage";
 import CheckoutPage from "@/pages/CheckoutPage";
 import MessagesPage from "@/pages/MessagesPage";
@@ -22,8 +22,8 @@ const router = createBrowserRouter([
         element: <FeedPage />,
     },
     {
-        path: "/profile",
-        element: <ProfilePage />,
+        path: "/seller/:sellerId",
+        element: <SellerProfilePage />,
     },
     {
         path: "/product/:id",

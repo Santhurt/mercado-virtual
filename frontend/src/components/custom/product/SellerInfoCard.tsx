@@ -3,12 +3,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { ISellerProfile } from "@/types/AppTypes";
 import { Star, MapPin } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 type SellerInfoCardProps = {
     seller?: ISellerProfile;
 };
 
 const SellerInfoCard = ({ seller }: SellerInfoCardProps) => {
+    const navigate = useNavigate();
+
     if (!seller) return null;
 
     // TODO: Fields not yet in API response, using defaults
@@ -22,6 +25,10 @@ const SellerInfoCard = ({ seller }: SellerInfoCardProps) => {
     const logoUrl = seller.logo
         ? (seller.logo.startsWith("http") ? seller.logo : `${API_URL}${seller.logo}`)
         : undefined;
+
+    const handleViewProfile = () => {
+        navigate(`/seller/${seller._id}`);
+    };
 
     return (
         <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
@@ -61,7 +68,7 @@ const SellerInfoCard = ({ seller }: SellerInfoCardProps) => {
                     </div>
                 </div>
             </div>
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" onClick={handleViewProfile}>
                 Ver Perfil
             </Button>
         </div>
@@ -69,3 +76,4 @@ const SellerInfoCard = ({ seller }: SellerInfoCardProps) => {
 };
 
 export default SellerInfoCard;
+

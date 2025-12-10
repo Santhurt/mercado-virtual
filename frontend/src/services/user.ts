@@ -132,4 +132,23 @@ export const userService = {
 
         return response.json();
     },
+
+    /**
+     * Get seller profile by seller ID
+     */
+    async getSellerById(sellerId: string, token: string): Promise<GetSellerResponse> {
+        const response = await fetch(`${API_URL}/api/sellers/${sellerId}`, {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || "Error al obtener comerciante");
+        }
+
+        return response.json();
+    },
 };
