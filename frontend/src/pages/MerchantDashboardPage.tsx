@@ -14,14 +14,43 @@ import ProductManagementCard from "@/components/custom/ProductManagementCard";
 import ProductForm from "@/components/custom/ProductForm";
 import OrdersSection from "@/components/custom/OrdersSection";
 import CategoryManagement from "@/components/custom/CategoryManagement";
+import ConfirmDialog from "@/components/custom/ConfirmDialog";
 import { useState } from "react";
-import { useProducts } from "@/hooks/useProducts";
+import { useProducts, useDeleteProduct } from "@/hooks/useProducts";
+import { useToast } from "@/components/ui/use-toast";
 import type { IProduct } from "@/types/AppTypes";
 
 const MerchantDashboardPage = () => {
+    const { toast } = useToast();
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const { data: products = [], isLoading, error } = useProducts();
-    console.log(products);
+    const deleteMutation = useDeleteProduct();
+
+    // State for delete confirmation
+    const [productToDelete, setProductToDelete] = useState<IProduct | null>(null);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+    const handleOpenDeleteDialog = (product: IProduct) => {
+        setProductToDelete(product);
+        setIsDeleteDialogOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!productToDelete) return;
+
+        try {
+            await deleteMutation.mutateAsync(productToDelete._id);
+            toast({ title: "Producto eliminado exitosamente" });
+            setIsDeleteDialogOpen(false);
+            setProductToDelete(null);
+        } catch (err: any) {
+            toast({
+                title: "Error",
+                description: err.message || "No se pudo eliminar el producto",
+                variant: "destructive",
+            });
+        }
+    };
 
     return (
         <MainLayout>
@@ -100,10 +129,10 @@ const MerchantDashboardPage = () => {
                                     <ProductManagementCard
                                         key={product._id}
                                         {...product}
-                                        id={product._id} // Adapt id for Component if needed
+                                        id={product._id}
                                         image={product.images && product.images.length > 0 ? product.images[0] : "https://placehold.co/200"}
                                         onEdit={() => setIsSheetOpen(true)} // TODO: Handle edit specific product
-                                        onDelete={() => { }}
+                                        onDelete={() => handleOpenDeleteDialog(product)}
                                     />
                                 ))}
                             </div>
@@ -121,8 +150,21 @@ const MerchantDashboardPage = () => {
                     </TabsContent>
                 </Tabs>
             </div>
+
+            <ConfirmDialog
+                open={isDeleteDialogOpen}
+                onOpenChange={setIsDeleteDialogOpen}
+                title="Eliminar Producto"
+                description={`¿Estás seguro de que deseas eliminar el producto "${productToDelete?.title}"? Esta acción no se puede deshacer.`}
+                confirmText="Eliminar"
+                cancelText="Cancelar"
+                onConfirm={handleConfirmDelete}
+                isLoading={deleteMutation.isPending}
+                variant="destructive"
+            />
         </MainLayout>
     );
 };
 
 export default MerchantDashboardPage;
+

@@ -11,12 +11,12 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Pencil, Trash2, Plus, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import ConfirmDialog from "./ConfirmDialog";
 
 const CategoryManagement = () => {
     const { toast } = useToast();
@@ -32,6 +32,10 @@ const CategoryManagement = () => {
         description: "",
         image: "",
     });
+
+    // State for delete confirmation
+    const [categoryToDelete, setCategoryToDelete] = useState<ICategory | null>(null);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
     const handleOpenDialog = (category?: ICategory) => {
         if (category) {
@@ -74,18 +78,25 @@ const CategoryManagement = () => {
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (confirm("¿Estás seguro de que deseas eliminar esta categoría?")) {
-            try {
-                await deleteMutation.mutateAsync(id);
-                toast({ title: "Categoría eliminada exitosamente" });
-            } catch (err: any) {
-                toast({
-                    title: "Error",
-                    description: err.message || "No se pudo eliminar la categoría",
-                    variant: "destructive",
-                });
-            }
+    const handleOpenDeleteDialog = (category: ICategory) => {
+        setCategoryToDelete(category);
+        setIsDeleteDialogOpen(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!categoryToDelete) return;
+
+        try {
+            await deleteMutation.mutateAsync(categoryToDelete._id);
+            toast({ title: "Categoría eliminada exitosamente" });
+            setIsDeleteDialogOpen(false);
+            setCategoryToDelete(null);
+        } catch (err: any) {
+            toast({
+                title: "Error",
+                description: err.message || "No se pudo eliminar la categoría",
+                variant: "destructive",
+            });
         }
     };
 
@@ -134,7 +145,7 @@ const CategoryManagement = () => {
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                onClick={() => handleDelete(category._id)}
+                                                onClick={() => handleOpenDeleteDialog(category)}
                                                 className="text-red-500 hover:text-red-700 hover:bg-red-100"
                                             >
                                                 <Trash2 className="h-4 w-4" />
@@ -188,6 +199,18 @@ const CategoryManagement = () => {
                     </form>
                 </DialogContent>
             </Dialog>
+
+            <ConfirmDialog
+                open={isDeleteDialogOpen}
+                onOpenChange={setIsDeleteDialogOpen}
+                title="Eliminar Categoría"
+                description={`¿Estás seguro de que deseas eliminar la categoría "${categoryToDelete?.name}"? Esta acción no se puede deshacer.`}
+                confirmText="Eliminar"
+                cancelText="Cancelar"
+                onConfirm={handleConfirmDelete}
+                isLoading={deleteMutation.isPending}
+                variant="destructive"
+            />
         </div>
     );
 };
