@@ -18,11 +18,13 @@ import ConfirmDialog from "@/components/custom/ConfirmDialog";
 import { useState } from "react";
 import { useProducts, useDeleteProduct } from "@/hooks/useProducts";
 import { useToast } from "@/components/ui/use-toast";
+import { getFirstImageUrl } from "@/lib/imageUtils";
 import type { IProduct } from "@/types/AppTypes";
 
 const MerchantDashboardPage = () => {
     const { toast } = useToast();
     const [isSheetOpen, setIsSheetOpen] = useState(false);
+    const [productToEdit, setProductToEdit] = useState<IProduct | null>(null);
     const { data: products = [], isLoading, error } = useProducts();
     const deleteMutation = useDeleteProduct();
 
@@ -33,6 +35,16 @@ const MerchantDashboardPage = () => {
     const handleOpenDeleteDialog = (product: IProduct) => {
         setProductToDelete(product);
         setIsDeleteDialogOpen(true);
+    };
+
+    const handleOpenEditSheet = (product?: IProduct) => {
+        setProductToEdit(product || null);
+        setIsSheetOpen(true);
+    };
+
+    const handleCloseSheet = () => {
+        setIsSheetOpen(false);
+        setProductToEdit(null);
     };
 
     const handleConfirmDelete = async () => {
@@ -65,22 +77,21 @@ const MerchantDashboardPage = () => {
                         </p>
                     </div>
 
-                    <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+                    <Sheet open={isSheetOpen} onOpenChange={(open) => !open && handleCloseSheet()}>
                         <SheetTrigger asChild>
-                            <Button className="gap-2 shadow-lg">
+                            <Button className="gap-2 shadow-lg" onClick={() => handleOpenEditSheet()}>
                                 <Plus className="h-4 w-4" />
                                 Nuevo Producto
                             </Button>
                         </SheetTrigger>
                         <SheetContent className="overflow-y-auto sm:max-w-md">
                             <SheetHeader>
-                                <SheetTitle>Crear Nuevo Producto</SheetTitle>
+                                <SheetTitle>{productToEdit ? "Editar Producto" : "Crear Nuevo Producto"}</SheetTitle>
                                 <SheetDescription>
-                                    Completa la información para publicar tu
-                                    producto.
+                                    {productToEdit ? "Modifica la información del producto." : "Completa la información para publicar tu producto."}
                                 </SheetDescription>
                             </SheetHeader>
-                            <ProductForm onClose={() => setIsSheetOpen(false)} />
+                            <ProductForm onClose={handleCloseSheet} product={productToEdit || undefined} />
                         </SheetContent>
                     </Sheet>
                 </div>
@@ -121,7 +132,7 @@ const MerchantDashboardPage = () => {
                         ) : products.length === 0 ? (
                             <div className="flex flex-col items-center justify-center p-8 border border-dashed rounded-lg">
                                 <p className="text-muted-foreground mb-4">No tienes productos registrados aún.</p>
-                                <Button onClick={() => setIsSheetOpen(true)}>Crear Primer Producto</Button>
+                                <Button onClick={() => handleOpenEditSheet()}>Crear Primer Producto</Button>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -130,8 +141,8 @@ const MerchantDashboardPage = () => {
                                         key={product._id}
                                         {...product}
                                         id={product._id}
-                                        image={product.images && product.images.length > 0 ? product.images[0] : "https://placehold.co/200"}
-                                        onEdit={() => setIsSheetOpen(true)} // TODO: Handle edit specific product
+                                        image={getFirstImageUrl(product.images)}
+                                        onEdit={() => handleOpenEditSheet(product)}
                                         onDelete={() => handleOpenDeleteDialog(product)}
                                     />
                                 ))}

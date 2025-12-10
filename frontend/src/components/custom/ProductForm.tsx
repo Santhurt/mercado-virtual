@@ -4,43 +4,56 @@ import { Textarea } from "@/components/ui/textarea";
 import { Upload, X, Clock, Plus, Trash2, AlertCircle } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useCategories } from "@/hooks/useCategories";
-import { useCreateProduct, useUploadProductImages } from "@/hooks/useProducts";
-import type { ICreateProductPayload, ISeller } from "@/types/AppTypes";
+import { useCreateProduct, useUpdateProduct, useUploadProductImages } from "@/hooks/useProducts";
+import type { ICreateProductPayload, ISeller, IProduct, ICategory } from "@/types/AppTypes";
 import { useToast } from "@/components/ui/use-toast";
 import { Label } from "@/components/ui/label";
 import { useAuthContext } from "@/context/AuthContext";
 import { userService } from "@/services/user";
 import CategoryMultiSelect from "./CategoryMultiSelect";
+import { getImageUrl } from "@/lib/imageUtils";
 
 interface ProductFormProps {
     onClose?: () => void;
+    product?: IProduct; // Product to edit (optional)
 }
 
-const ProductForm = ({ onClose }: ProductFormProps) => {
+const ProductForm = ({ onClose, product }: ProductFormProps) => {
     const { toast } = useToast();
     const { user, token } = useAuthContext();
     const { data: categories = [] } = useCategories();
     const createMutation = useCreateProduct();
+    const updateMutation = useUpdateProduct();
     const uploadImagesMutation = useUploadProductImages();
+
+    const isEditMode = !!product;
 
     const [sellerInfo, setSellerInfo] = useState<ISeller | null>(null);
     const [isLoadingSeller, setIsLoadingSeller] = useState(true);
     const [sellerError, setSellerError] = useState<string | null>(null);
 
+    // Helper to extract category IDs from product
+    const getCategoryIds = (categories: ICategory[] | string[] | undefined): string[] => {
+        if (!categories) return [];
+        return categories.map(cat => typeof cat === 'string' ? cat : cat._id);
+    };
+
     const [formData, setFormData] = useState<Omit<ICreateProductPayload, 'sellerId'>>({
-        title: "",
-        price: 0,
-        description: "",
-        stock: 0,
-        status: "Available",
-        categories: [],
-        features: [],
-        specifications: {},
-        tags: [],
+        title: product?.title || "",
+        price: product?.price || 0,
+        description: product?.description || "",
+        stock: product?.stock || 0,
+        status: product?.status || "Available",
+        categories: getCategoryIds(product?.categories),
+        features: product?.features || [],
+        specifications: product?.specifications || {},
+        tags: product?.tags || [],
     });
 
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     const [filePreviews, setFilePreviews] = useState<string[]>([]);
+    // Store existing images (URLs from the product being edited)
+    const [existingImages, setExistingImages] = useState<string[]>(product?.images || []);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [newFeature, setNewFeature] = useState("");
@@ -164,7 +177,7 @@ const ProductForm = ({ onClose }: ProductFormProps) => {
     };
 
     const handleSubmit = async () => {
-        if (!sellerInfo) {
+        if (!sellerInfo && !isEditMode) {
             toast({
                 title: "Error",
                 description: "No tienes un perfil de vendedor activo",
@@ -174,33 +187,48 @@ const ProductForm = ({ onClose }: ProductFormProps) => {
         }
 
         try {
-            console.log("[ProductForm] Creating product with seller:", sellerInfo);
-            console.log("[ProductForm] Seller ID:", sellerInfo._id);
+            if (isEditMode && product) {
+                // Update existing product
+                const payload = {
+                    ...formData,
+                };
 
-            // Step 1: Create product
-            const payload: ICreateProductPayload = {
-                ...formData,
-                sellerId: sellerInfo._id,
-            };
+                await updateMutation.mutateAsync({ id: product._id, payload });
 
-            console.log("[ProductForm] Product payload:", payload);
+                // Upload new images if any
+                if (selectedFiles.length > 0) {
+                    await uploadImagesMutation.mutateAsync({
+                        productId: product._id,
+                        files: selectedFiles,
+                    });
+                }
 
-            const createdProduct = await createMutation.mutateAsync(payload);
+                toast({ title: "Producto actualizado exitosamente" });
+            } else {
+                // Create new product
+                const payload: ICreateProductPayload = {
+                    ...formData,
+                    sellerId: sellerInfo!._id,
+                };
 
-            // Step 2: Upload images if any
-            if (selectedFiles.length > 0 && createdProduct._id) {
-                await uploadImagesMutation.mutateAsync({
-                    productId: createdProduct._id,
-                    files: selectedFiles,
-                });
+                const createdProduct = await createMutation.mutateAsync(payload);
+
+                // Upload images if any
+                if (selectedFiles.length > 0 && createdProduct._id) {
+                    await uploadImagesMutation.mutateAsync({
+                        productId: createdProduct._id,
+                        files: selectedFiles,
+                    });
+                }
+
+                toast({ title: "Producto creado exitosamente" });
             }
 
-            toast({ title: "Producto creado exitosamente" });
             if (onClose) onClose();
         } catch (error: any) {
             toast({
                 title: "Error",
-                description: error.message || "Error al crear producto",
+                description: error.message || `Error al ${isEditMode ? 'actualizar' : 'crear'} producto`,
                 variant: "destructive"
             });
         }
@@ -271,6 +299,28 @@ const ProductForm = ({ onClose }: ProductFormProps) => {
             {/* Image Upload */}
             <div className="space-y-3">
                 <Label>Imágenes del Producto (máx. 5)</Label>
+
+                {/* Existing Images (edit mode) */}
+                {existingImages.length > 0 && (
+                    <div className="space-y-2">
+                        <p className="text-xs text-muted-foreground">Imágenes actuales:</p>
+                        <div className="grid grid-cols-3 gap-2">
+                            {existingImages.map((img, i) => (
+                                <div key={`existing-${i}`} className="aspect-square bg-muted rounded-md relative group overflow-hidden">
+                                    <img src={getImageUrl(img)} alt={`Imagen ${i + 1}`} className="w-full h-full object-cover" />
+                                    <button
+                                        type="button"
+                                        className="absolute top-1 right-1 bg-destructive text-white rounded-full p-1 hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
+                                        onClick={() => setExistingImages(prev => prev.filter((_, idx) => idx !== i))}
+                                    >
+                                        <X className="h-3 w-3" />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 <div
                     onClick={() => fileInputRef.current?.click()}
                     className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors"
@@ -280,7 +330,7 @@ const ProductForm = ({ onClose }: ProductFormProps) => {
                         Haz clic para seleccionar imágenes
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                        {selectedFiles.length}/5 imágenes seleccionadas
+                        {existingImages.length + selectedFiles.length}/5 imágenes
                     </p>
                 </div>
                 <input
@@ -292,19 +342,22 @@ const ProductForm = ({ onClose }: ProductFormProps) => {
                     onChange={handleFileSelect}
                 />
                 {filePreviews.length > 0 && (
-                    <div className="grid grid-cols-3 gap-2 mt-2">
-                        {filePreviews.map((preview, i) => (
-                            <div key={i} className="aspect-square bg-muted rounded-md relative group overflow-hidden">
-                                <img src={preview} alt="Preview" className="w-full h-full object-cover" />
-                                <button
-                                    type="button"
-                                    className="absolute top-1 right-1 bg-destructive text-white rounded-full p-1 hover:bg-red-600 transition-colors"
-                                    onClick={() => removeFile(i)}
-                                >
-                                    <X className="h-3 w-3" />
-                                </button>
-                            </div>
-                        ))}
+                    <div className="space-y-2">
+                        <p className="text-xs text-muted-foreground">Nuevas imágenes:</p>
+                        <div className="grid grid-cols-3 gap-2">
+                            {filePreviews.map((preview, i) => (
+                                <div key={i} className="aspect-square bg-muted rounded-md relative group overflow-hidden">
+                                    <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                                    <button
+                                        type="button"
+                                        className="absolute top-1 right-1 bg-destructive text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                                        onClick={() => removeFile(i)}
+                                    >
+                                        <X className="h-3 w-3" />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 )}
             </div>
