@@ -2,19 +2,27 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
 import {
     ShoppingCart,
     MessageCircle,
-    Star,
     Share2,
     Heart,
     Package,
+    Plus,
+    Minus,
+    Loader2,
+    Check,
+    AlertCircle,
 } from "lucide-react";
 import { useState } from "react";
 import RatingStars from "./RatingStars";
 import ProductQuickInfo from "./ProductQuickInfo";
 import SellerInfoCard from "./SellerInfoCard";
 import type { IProduct } from "@/types/AppTypes";
+import { useCart } from "@/context/CartContext";
+import { useAuthContext } from "@/context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 type ProductHeaderProps = {
     product: IProduct;
@@ -22,7 +30,53 @@ type ProductHeaderProps = {
 
 const ProductHeader = ({ product }: ProductHeaderProps) => {
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-    console.log(product);
+    const [quantity, setQuantity] = useState(1);
+    const [addStatus, setAddStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    const { addItem, openCart } = useCart();
+    const { isAuthenticated } = useAuthContext();
+    const navigate = useNavigate();
+
+    // Get the raw price value (handle both string and number)
+    const rawPrice = typeof product.price === "string"
+        ? parseFloat(product.price.replace(/[^0-9.-]+/g, ""))
+        : product.price;
+
+    const handleQuantityChange = (value: number) => {
+        const newQuantity = Math.max(1, Math.min(value, product.stock));
+        setQuantity(newQuantity);
+    };
+
+    const handleAddToCart = async () => {
+        if (!isAuthenticated) {
+            navigate("/login");
+            return;
+        }
+
+        setAddStatus("loading");
+        setErrorMessage(null);
+
+        try {
+            await addItem({
+                productId: product._id,
+                title: product.title,
+                price: rawPrice,
+                image: product.images?.[0] || undefined,
+                quantity,
+            });
+            setAddStatus("success");
+            setTimeout(() => {
+                setAddStatus("idle");
+                openCart();
+            }, 1500);
+        } catch (err) {
+            setAddStatus("error");
+            setErrorMessage(err instanceof Error ? err.message : "Error al agregar");
+            setTimeout(() => setAddStatus("idle"), 3000);
+        }
+    };
+
     return (
         <Card>
             <CardContent className="p-6">
@@ -122,11 +176,73 @@ const ProductHeader = ({ product }: ProductHeaderProps) => {
                             <ProductQuickInfo stock={product.stock} />
                         </div>
 
+                        {/* Quantity Selector */}
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Cantidad</label>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => handleQuantityChange(quantity - 1)}
+                                    disabled={quantity <= 1 || addStatus === "loading"}
+                                >
+                                    <Minus className="h-4 w-4" />
+                                </Button>
+                                <Input
+                                    type="number"
+                                    min={1}
+                                    max={product.stock}
+                                    value={quantity}
+                                    onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 1)}
+                                    className="w-20 text-center"
+                                    disabled={addStatus === "loading"}
+                                />
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => handleQuantityChange(quantity + 1)}
+                                    disabled={quantity >= product.stock || addStatus === "loading"}
+                                >
+                                    <Plus className="h-4 w-4" />
+                                </Button>
+                                <span className="text-sm text-muted-foreground ml-2">
+                                    {product.stock} disponibles
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Error Message */}
+                        {addStatus === "error" && errorMessage && (
+                            <div className="flex items-center gap-2 text-destructive text-sm bg-destructive/10 p-3 rounded-md">
+                                <AlertCircle className="h-4 w-4" />
+                                {errorMessage}
+                            </div>
+                        )}
+
                         {/* Acciones principales */}
                         <div className="space-y-2 pt-2">
-                            <Button className="w-full h-12 text-lg" size="lg">
-                                <ShoppingCart className="h-5 w-5 mr-2" />
-                                Agregar al Carrito
+                            <Button
+                                className="w-full h-12 text-lg"
+                                size="lg"
+                                onClick={handleAddToCart}
+                                disabled={addStatus === "loading" || product.stock === 0}
+                            >
+                                {addStatus === "loading" ? (
+                                    <>
+                                        <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                                        Agregando...
+                                    </>
+                                ) : addStatus === "success" ? (
+                                    <>
+                                        <Check className="h-5 w-5 mr-2" />
+                                        ¡Agregado!
+                                    </>
+                                ) : (
+                                    <>
+                                        <ShoppingCart className="h-5 w-5 mr-2" />
+                                        Agregar al Carrito
+                                    </>
+                                )}
                             </Button>
                             <Button
                                 variant="outline"

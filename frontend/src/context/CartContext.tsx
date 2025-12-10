@@ -1,18 +1,23 @@
-import React, { createContext, useContext, useState, useCallback, useMemo } from "react";
+import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from "react";
 import type { ICartItem } from "@/types/AppTypes";
+import { cartService } from "@/services/cart";
+import { useAuthContext } from "./AuthContext";
 
 interface CartContextType {
     items: ICartItem[];
     totalPrice: number;
     itemCount: number;
     isOpen: boolean;
-    addItem: (item: Omit<ICartItem, "quantity"> & { quantity?: number }) => void;
-    removeItem: (productId: string) => void;
-    updateQuantity: (productId: string, quantity: number) => void;
-    clearCart: () => void;
+    isLoading: boolean;
+    error: string | null;
+    addItem: (item: Omit<ICartItem, "quantity"> & { quantity?: number }) => Promise<void>;
+    removeItem: (productId: string) => Promise<void>;
+    updateQuantity: (productId: string, quantity: number) => Promise<void>;
+    clearCart: () => Promise<void>;
     openCart: () => void;
     closeCart: () => void;
     toggleCart: () => void;
+    refreshCart: () => Promise<void>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -32,40 +37,135 @@ interface CartProviderProps {
 export const CartProvider = ({ children }: CartProviderProps) => {
     const [items, setItems] = useState<ICartItem[]>([]);
     const [isOpen, setIsOpen] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-    const addItem = useCallback((item: Omit<ICartItem, "quantity"> & { quantity?: number }) => {
-        setItems((prev) => {
-            const existingItem = prev.find((i) => i.productId === item.productId);
-            if (existingItem) {
-                return prev.map((i) =>
-                    i.productId === item.productId
-                        ? { ...i, quantity: i.quantity + (item.quantity || 1) }
-                        : i
-                );
-            }
-            return [...prev, { ...item, quantity: item.quantity || 1 }];
-        });
-    }, []);
+    const { user, token, isAuthenticated, isLoading: isAuthLoading } = useAuthContext();
 
-    const removeItem = useCallback((productId: string) => {
-        setItems((prev) => prev.filter((item) => item.productId !== productId));
-    }, []);
-
-    const updateQuantity = useCallback((productId: string, quantity: number) => {
-        if (quantity < 1) {
-            removeItem(productId);
+    // Fetch cart from backend on mount and when user changes
+    const refreshCart = useCallback(async () => {
+        if (!isAuthenticated || !user?._id || !token) {
+            setItems([]);
             return;
         }
-        setItems((prev) =>
-            prev.map((item) =>
-                item.productId === productId ? { ...item, quantity } : item
-            )
-        );
-    }, [removeItem]);
 
-    const clearCart = useCallback(() => {
-        setItems([]);
-    }, []);
+        setIsLoading(true);
+        setError(null);
+        try {
+            const cart = await cartService.getCart(user._id, token);
+            setItems(cart.items || []);
+        } catch (err) {
+            console.error("Error fetching cart:", err);
+            setError(err instanceof Error ? err.message : "Error al cargar carrito");
+        } finally {
+            setIsLoading(false);
+        }
+    }, [isAuthenticated, user?._id, token]);
+
+    // Load cart when authentication state changes
+    useEffect(() => {
+        if (!isAuthLoading) {
+            refreshCart();
+        }
+    }, [isAuthLoading, refreshCart]);
+
+    const addItem = useCallback(async (item: Omit<ICartItem, "quantity"> & { quantity?: number }) => {
+        if (!isAuthenticated || !user?._id || !token) {
+            setError("Debes iniciar sesión para agregar al carrito");
+            throw new Error("Usuario no autenticado");
+        }
+
+        setIsLoading(true);
+        setError(null);
+        try {
+            const cart = await cartService.addItem({
+                userId: user._id,
+                productId: item.productId,
+                title: item.title,
+                price: item.price,
+                quantity: item.quantity || 1,
+                image: item.image,
+            }, token);
+            setItems(cart.items || []);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : "Error al agregar al carrito";
+            setError(message);
+            throw err;
+        } finally {
+            setIsLoading(false);
+        }
+    }, [isAuthenticated, user?._id, token]);
+
+    const removeItem = useCallback(async (productId: string) => {
+        if (!isAuthenticated || !user?._id || !token) {
+            setError("Debes iniciar sesión");
+            throw new Error("Usuario no autenticado");
+        }
+
+        setIsLoading(true);
+        setError(null);
+        try {
+            const cart = await cartService.removeItem({
+                userId: user._id,
+                productId,
+            }, token);
+            setItems(cart.items || []);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : "Error al eliminar del carrito";
+            setError(message);
+            throw err;
+        } finally {
+            setIsLoading(false);
+        }
+    }, [isAuthenticated, user?._id, token]);
+
+    const updateQuantity = useCallback(async (productId: string, quantity: number) => {
+        if (!isAuthenticated || !user?._id || !token) {
+            setError("Debes iniciar sesión");
+            throw new Error("Usuario no autenticado");
+        }
+
+        if (quantity < 1) {
+            return removeItem(productId);
+        }
+
+        setIsLoading(true);
+        setError(null);
+        try {
+            const cart = await cartService.updateItemQuantity({
+                userId: user._id,
+                productId,
+                quantity,
+            }, token);
+            setItems(cart.items || []);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : "Error al actualizar cantidad";
+            setError(message);
+            throw err;
+        } finally {
+            setIsLoading(false);
+        }
+    }, [isAuthenticated, user?._id, token, removeItem]);
+
+    const clearCart = useCallback(async () => {
+        if (!isAuthenticated || !user?._id || !token) {
+            setError("Debes iniciar sesión");
+            throw new Error("Usuario no autenticado");
+        }
+
+        setIsLoading(true);
+        setError(null);
+        try {
+            const cart = await cartService.clearCart({ userId: user._id }, token);
+            setItems(cart.items || []);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : "Error al vaciar carrito";
+            setError(message);
+            throw err;
+        } finally {
+            setIsLoading(false);
+        }
+    }, [isAuthenticated, user?._id, token]);
 
     const openCart = useCallback(() => setIsOpen(true), []);
     const closeCart = useCallback(() => setIsOpen(false), []);
@@ -87,6 +187,8 @@ export const CartProvider = ({ children }: CartProviderProps) => {
             totalPrice,
             itemCount,
             isOpen,
+            isLoading,
+            error,
             addItem,
             removeItem,
             updateQuantity,
@@ -94,8 +196,9 @@ export const CartProvider = ({ children }: CartProviderProps) => {
             openCart,
             closeCart,
             toggleCart,
+            refreshCart,
         }),
-        [items, totalPrice, itemCount, isOpen, addItem, removeItem, updateQuantity, clearCart, openCart, closeCart, toggleCart]
+        [items, totalPrice, itemCount, isOpen, isLoading, error, addItem, removeItem, updateQuantity, clearCart, openCart, closeCart, toggleCart, refreshCart]
     );
 
     return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
