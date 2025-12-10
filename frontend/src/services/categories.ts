@@ -1,9 +1,11 @@
 import type { ICategory, ICreateCategoryPayload, IUpdateCategoryPayload } from "@/types/AppTypes";
 
 const API_URL = import.meta.env.VITE_API_URL;
+const AUTH_STORAGE_KEY = "mercafacil_auth";
 
 const getAuthHeaders = () => {
-    const token = localStorage.getItem("token"); // Assuming token is stored in localStorage
+    const stored = localStorage.getItem(AUTH_STORAGE_KEY);
+    const token = stored ? JSON.parse(stored).token : null;
     return {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,

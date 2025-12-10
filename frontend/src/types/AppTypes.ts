@@ -81,6 +81,7 @@ export interface ICreateCategoryPayload {
 export interface IUpdateCategoryPayload extends Partial<ICreateCategoryPayload> { }
 
 export interface ICreateProductPayload {
+    sellerId?: string;
     title: string;
     price: number;
     status: string;

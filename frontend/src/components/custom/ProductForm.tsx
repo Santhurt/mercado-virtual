@@ -1,13 +1,16 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ImagePlus, X, Clock, Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { Upload, X, Clock, Plus, Trash2, AlertCircle } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
 import { useCategories } from "@/hooks/useCategories";
-import { useCreateProduct, useUpdateProduct } from "@/hooks/useProducts";
-import type { ICreateProductPayload } from "@/types/AppTypes";
+import { useCreateProduct, useUploadProductImages } from "@/hooks/useProducts";
+import type { ICreateProductPayload, ISeller } from "@/types/AppTypes";
 import { useToast } from "@/components/ui/use-toast";
 import { Label } from "@/components/ui/label";
+import { useAuthContext } from "@/context/AuthContext";
+import { userService } from "@/services/user";
+import CategoryMultiSelect from "./CategoryMultiSelect";
 
 interface ProductFormProps {
     onClose?: () => void;
@@ -15,11 +18,16 @@ interface ProductFormProps {
 
 const ProductForm = ({ onClose }: ProductFormProps) => {
     const { toast } = useToast();
+    const { user, token } = useAuthContext();
     const { data: categories = [] } = useCategories();
     const createMutation = useCreateProduct();
-    // const updateMutation = useUpdateProduct(); // Will be used when editing is implemented
+    const uploadImagesMutation = useUploadProductImages();
 
-    const [formData, setFormData] = useState<ICreateProductPayload>({
+    const [sellerInfo, setSellerInfo] = useState<ISeller | null>(null);
+    const [isLoadingSeller, setIsLoadingSeller] = useState(true);
+    const [sellerError, setSellerError] = useState<string | null>(null);
+
+    const [formData, setFormData] = useState<Omit<ICreateProductPayload, 'sellerId'>>({
         title: "",
         price: 0,
         description: "",
@@ -29,14 +37,69 @@ const ProductForm = ({ onClose }: ProductFormProps) => {
         features: [],
         specifications: {},
         tags: [],
-        images: [],
     });
+
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+    const [filePreviews, setFilePreviews] = useState<string[]>([]);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [newFeature, setNewFeature] = useState("");
     const [newTag, setNewTag] = useState("");
     const [specKey, setSpecKey] = useState("");
     const [specValue, setSpecValue] = useState("");
-    const [newImageUrl, setNewImageUrl] = useState("");
+
+    // Fetch seller info on mount
+    useEffect(() => {
+        const fetchSellerInfo = async () => {
+            if (!user || !token) {
+                setSellerError("Usuario no autenticado");
+                setIsLoadingSeller(false);
+                return;
+            }
+
+            try {
+                const response = await userService.getSellerByUserId(user._id, token);
+                console.log("[ProductForm] Seller API Response:", response);
+
+                if (response && response.data) {
+                    // API returns sellers array in data.sellers
+                    const sellersData = response.data as any;
+                    console.log("[ProductForm] Sellers data:", sellersData);
+
+                    // Check if data.sellers exists (array format)
+                    if (sellersData.sellers && Array.isArray(sellersData.sellers) && sellersData.sellers.length > 0) {
+                        const seller = sellersData.sellers[0];
+                        console.log("[ProductForm] Selected seller:", seller);
+                        setSellerInfo(seller);
+                    }
+                    // Check if data is directly the seller object
+                    else if (sellersData._id) {
+                        console.log("[ProductForm] Direct seller object:", sellersData);
+                        setSellerInfo(sellersData);
+                    }
+                    // Check if data is an array
+                    else if (Array.isArray(sellersData) && sellersData.length > 0) {
+                        console.log("[ProductForm] Seller from array:", sellersData[0]);
+                        setSellerInfo(sellersData[0]);
+                    }
+                    else {
+                        console.error("[ProductForm] No seller profile found in response");
+                        setSellerError("No tienes un perfil de vendedor activo");
+                    }
+                } else {
+                    console.error("[ProductForm] Empty response from seller API");
+                    setSellerError("No tienes un perfil de vendedor activo");
+                }
+            } catch (error: any) {
+                console.error("[ProductForm] Error fetching seller:", error);
+                setSellerError(error.message || "Error al cargar perfil de vendedor");
+            } finally {
+                setIsLoadingSeller(false);
+            }
+        };
+
+        fetchSellerInfo();
+    }, [user, token]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { id, value } = e.target;
@@ -46,26 +109,33 @@ const ProductForm = ({ onClose }: ProductFormProps) => {
         }));
     };
 
-    const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
+    const handleCategoryChange = (ids: string[]) => {
         setFormData(prev => ({
             ...prev,
-            categories: selectedOptions
+            categories: ids
         }));
     };
 
-    const addImage = () => {
-        if (newImageUrl) {
-            setFormData(prev => ({ ...prev, images: [...(prev.images || []), newImageUrl] }));
-            setNewImageUrl("");
-        }
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files) return;
+
+        const newFiles = Array.from(files).slice(0, 5 - selectedFiles.length);
+        setSelectedFiles(prev => [...prev, ...newFiles]);
+
+        // Create previews
+        newFiles.forEach(file => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setFilePreviews(prev => [...prev, reader.result as string]);
+            };
+            reader.readAsDataURL(file);
+        });
     };
 
-    const removeImage = (index: number) => {
-        setFormData(prev => ({
-            ...prev,
-            images: (prev.images || []).filter((_, i) => i !== index)
-        }));
+    const removeFile = (index: number) => {
+        setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+        setFilePreviews(prev => prev.filter((_, i) => i !== index));
     };
 
     const addFeature = () => {
@@ -94,8 +164,37 @@ const ProductForm = ({ onClose }: ProductFormProps) => {
     };
 
     const handleSubmit = async () => {
+        if (!sellerInfo) {
+            toast({
+                title: "Error",
+                description: "No tienes un perfil de vendedor activo",
+                variant: "destructive"
+            });
+            return;
+        }
+
         try {
-            await createMutation.mutateAsync(formData);
+            console.log("[ProductForm] Creating product with seller:", sellerInfo);
+            console.log("[ProductForm] Seller ID:", sellerInfo._id);
+
+            // Step 1: Create product
+            const payload: ICreateProductPayload = {
+                ...formData,
+                sellerId: sellerInfo._id,
+            };
+
+            console.log("[ProductForm] Product payload:", payload);
+
+            const createdProduct = await createMutation.mutateAsync(payload);
+
+            // Step 2: Upload images if any
+            if (selectedFiles.length > 0 && createdProduct._id) {
+                await uploadImagesMutation.mutateAsync({
+                    productId: createdProduct._id,
+                    files: selectedFiles,
+                });
+            }
+
             toast({ title: "Producto creado exitosamente" });
             if (onClose) onClose();
         } catch (error: any) {
@@ -106,6 +205,27 @@ const ProductForm = ({ onClose }: ProductFormProps) => {
             });
         }
     };
+
+    if (isLoadingSeller) {
+        return (
+            <div className="flex items-center justify-center py-8">
+                <Clock className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
+
+    if (sellerError) {
+        return (
+            <div className="flex flex-col items-center justify-center py-8 text-center space-y-3">
+                <AlertCircle className="h-10 w-10 text-destructive" />
+                <p className="text-destructive font-medium">{sellerError}</p>
+                <p className="text-sm text-muted-foreground">
+                    Debes tener un perfil de vendedor para crear productos.
+                </p>
+                <Button variant="outline" onClick={onClose}>Cerrar</Button>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6 py-4">
@@ -138,44 +258,55 @@ const ProductForm = ({ onClose }: ProductFormProps) => {
                 </div>
 
                 <div className="grid gap-2">
-                    <Label>Categoría (Ctrl+Click para múltiple)</Label>
-                    <select
-                        multiple
-                        className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    <Label>Categorías</Label>
+                    <CategoryMultiSelect
+                        categories={categories}
+                        selectedIds={formData.categories}
                         onChange={handleCategoryChange}
-                        value={formData.categories}
-                    >
-                        {categories.map(cat => (
-                            <option key={cat._id} value={cat._id}>{cat.name}</option>
-                        ))}
-                    </select>
+                        placeholder="Seleccionar categorías..."
+                    />
                 </div>
             </div>
 
-            {/* Image Management */}
+            {/* Image Upload */}
             <div className="space-y-3">
-                <Label>Imágenes del Producto (URL)</Label>
-                <div className="flex gap-2">
-                    <Input
-                        value={newImageUrl}
-                        onChange={(e) => setNewImageUrl(e.target.value)}
-                        placeholder="https://ejemplo.com/imagen.jpg"
-                    />
-                    <Button type="button" onClick={addImage} variant="secondary">Agregar</Button>
+                <Label>Imágenes del Producto (máx. 5)</Label>
+                <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors"
+                >
+                    <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                    <p className="text-sm text-muted-foreground">
+                        Haz clic para seleccionar imágenes
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                        {selectedFiles.length}/5 imágenes seleccionadas
+                    </p>
                 </div>
-                <div className="grid grid-cols-3 gap-2 mt-2">
-                    {(formData.images || []).map((img, i) => (
-                        <div key={i} className="aspect-square bg-muted rounded-md relative group overflow-hidden">
-                            <img src={img} alt="Preview" className="w-full h-full object-cover" />
-                            <button
-                                className="absolute top-1 right-1 bg-destructive text-white rounded-full p-1 opacity-100 hover:bg-red-600 transition-colors"
-                                onClick={() => removeImage(i)}
-                            >
-                                <X className="h-3 w-3" />
-                            </button>
-                        </div>
-                    ))}
-                </div>
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={handleFileSelect}
+                />
+                {filePreviews.length > 0 && (
+                    <div className="grid grid-cols-3 gap-2 mt-2">
+                        {filePreviews.map((preview, i) => (
+                            <div key={i} className="aspect-square bg-muted rounded-md relative group overflow-hidden">
+                                <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                                <button
+                                    type="button"
+                                    className="absolute top-1 right-1 bg-destructive text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                                    onClick={() => removeFile(i)}
+                                >
+                                    <X className="h-3 w-3" />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
             {/* Features & Tags */}
@@ -237,8 +368,13 @@ const ProductForm = ({ onClose }: ProductFormProps) => {
 
             <div className="flex justify-end gap-3 pt-4">
                 <Button variant="outline" type="button" onClick={onClose}>Cancelar</Button>
-                <Button onClick={handleSubmit} disabled={createMutation.isPending}>
-                    {createMutation.isPending && <Clock className="mr-2 h-4 w-4 animate-spin" />}
+                <Button
+                    onClick={handleSubmit}
+                    disabled={createMutation.isPending || uploadImagesMutation.isPending}
+                >
+                    {(createMutation.isPending || uploadImagesMutation.isPending) && (
+                        <Clock className="mr-2 h-4 w-4 animate-spin" />
+                    )}
                     Guardar Producto
                 </Button>
             </div>

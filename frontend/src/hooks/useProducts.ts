@@ -47,3 +47,14 @@ export const useDeleteProduct = () => {
         },
     });
 };
+
+export const useUploadProductImages = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ productId, files }: { productId: string; files: File[] }) =>
+            productService.uploadProductImages(productId, files),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["products"] });
+        },
+    });
+};

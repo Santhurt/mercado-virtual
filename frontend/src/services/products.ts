@@ -1,13 +1,20 @@
 import type { IProduct, ICreateProductPayload, IUpdateProductPayload } from "@/types/AppTypes";
 
 const API_URL = import.meta.env.VITE_API_URL;
+const AUTH_STORAGE_KEY = "mercafacil_auth";
 
 const getAuthHeaders = () => {
-    const token = localStorage.getItem("token");
+    const stored = localStorage.getItem(AUTH_STORAGE_KEY);
+    const token = stored ? JSON.parse(stored).token : null;
     return {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
     };
+};
+
+const getAuthToken = () => {
+    const stored = localStorage.getItem(AUTH_STORAGE_KEY);
+    return stored ? JSON.parse(stored).token : null;
 };
 
 export const productService = {
@@ -70,5 +77,28 @@ export const productService = {
             const error = await response.json();
             throw new Error(error.message || "Error deleting product");
         }
+    },
+
+    async uploadProductImages(productId: string, files: File[]): Promise<string[]> {
+        const formData = new FormData();
+        files.forEach(file => {
+            formData.append("images", file);
+        });
+
+        const token = getAuthToken();
+        const response = await fetch(`${API_URL}/api/products/${productId}/images`, {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || "Error uploading images");
+        }
+        const data = await response.json();
+        return data.data || data;
     },
 };
