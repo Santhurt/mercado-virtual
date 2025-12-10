@@ -25,6 +25,10 @@ const sellerSchema = new Schema(
             enum: SELLER_ACCOUNT_STATUSES,
             default: "no_aprobado",
         },
+        image: {
+            type: String,
+            default: "",
+        },
         products: {
             type: [
                 {

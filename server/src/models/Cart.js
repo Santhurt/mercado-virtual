@@ -3,7 +3,8 @@ import mongoose, { Schema } from "mongoose";
 const cartSchema = new Schema(
     {
         userId: {
-            type: String,
+            type: Schema.Types.ObjectId,
+            ref: "User",
             default: null,
         },
         sessionId: {
@@ -12,8 +13,14 @@ const cartSchema = new Schema(
         },
         items: [
             {
+                seller: {
+                    type: Schema.Types.ObjectId,
+                    ref: "Seller", // Asumiendo que el modelo de comerciante es "Seller"
+                    required: true, // Debe ser requerido en el ítem del carrito
+                },
                 productId: {
-                    type: String,
+                    type: Schema.Types.ObjectId,
+                    ref: "Product",
                     required: true,
                 },
                 title: {
@@ -44,7 +51,7 @@ const cartSchema = new Schema(
             default: "active",
         },
     },
-    { timestamps: true }
+    { timestamps: true },
 );
 
 // Calculate total price before saving

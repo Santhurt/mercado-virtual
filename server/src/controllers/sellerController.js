@@ -18,6 +18,7 @@ const validateAccountStatus = (status) => !status || SELLER_ACCOUNT_STATUSES.inc
 export const createSeller = async (req, res) => {
     try {
         const { userId, businessName, description, accountStatus } = req.body;
+        const image = req.file ? `sellers/${req.file.filename}` : "";
 
         const missingFields = ["userId", "businessName"].filter((field) => !req.body[field]);
         if (missingFields.length) {
@@ -57,6 +58,7 @@ export const createSeller = async (req, res) => {
             businessName,
             description,
             accountStatus,
+            image,
         });
 
         if (user.role !== "seller") {

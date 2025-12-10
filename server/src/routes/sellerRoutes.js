@@ -7,11 +7,12 @@ import {
     updateSeller,
 } from "../controllers/sellerController.js";
 import authMiddleware from "../middleware/authMiddleware.js";
+import { uploadSellerImages } from "../middlewares/sellerImageUpload.js";
 
 const router = express.Router();
 
 // Todas las rutas de vendedores requieren autenticación
-router.post("/", authMiddleware, createSeller);
+router.post("/", authMiddleware, uploadSellerImages.single("image"), createSeller);
 router.get("/", authMiddleware, getSellers);
 router.get("/:id", authMiddleware, getSellerById);
 router.put("/:id", authMiddleware, updateSeller);

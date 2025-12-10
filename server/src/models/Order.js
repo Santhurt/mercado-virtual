@@ -3,22 +3,26 @@ import mongoose, { Schema } from "mongoose";
 const orderSchema = new Schema(
     {
         customerId: {
-            type: String,
-            required: true,
-        },
-        merchantId: {
-            type: String,
+            type: Schema.Types.ObjectId,
+            ref: "User",
             required: true,
         },
         status: {
             type: String,
-            enum: ["pending", "processing", "shipped", "delivered", "cancelled"],
+            enum: [
+                "pending",
+                "processing",
+                "shipped",
+                "delivered",
+                "cancelled",
+            ],
             default: "pending",
         },
         products: [
             {
                 productId: {
-                    type: String,
+                    type: Schema.Types.ObjectId,
+                    ref: "Product",
                     required: true,
                 },
                 title: {
@@ -40,6 +44,11 @@ const orderSchema = new Schema(
                 },
                 image: {
                     type: String,
+                },
+                seller: {
+                    type: Schema.Types.ObjectId,
+                    ref: "Seller",
+                    required: true,
                 },
             },
         ],
@@ -86,7 +95,7 @@ const orderSchema = new Schema(
             },
         ],
     },
-    { timestamps: true }
+    { timestamps: true },
 );
 
 const Order = mongoose.model("Order", orderSchema);
