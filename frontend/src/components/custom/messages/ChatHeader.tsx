@@ -2,12 +2,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { IChatParticipant } from "@/types/ChatTypes";
-import { ArrowLeft, MoreVertical } from "lucide-react";
+import { ArrowLeft, MoreVertical, Wifi, WifiOff } from "lucide-react";
 
 interface ChatHeaderProps {
     participant: IChatParticipant;
     onBack?: () => void;
     showBackButton?: boolean;
+    isConnected?: boolean;
     className?: string;
 }
 
@@ -35,7 +36,7 @@ function formatLastSeen(date?: Date): string {
     return `Últ. vez ${lastSeen.toLocaleDateString("es-CO", { day: "numeric", month: "short" })}`;
 }
 
-export function ChatHeader({ participant, onBack, showBackButton = false, className }: ChatHeaderProps) {
+export function ChatHeader({ participant, onBack, showBackButton = false, isConnected, className }: ChatHeaderProps) {
     return (
         <div className={cn("flex items-center gap-3 p-4 border-b bg-background", className)}>
             {showBackButton && (
@@ -51,9 +52,9 @@ export function ChatHeader({ participant, onBack, showBackButton = false, classN
 
             <div className="relative shrink-0">
                 <Avatar className="size-10">
-                    <AvatarImage src={participant.avatar} alt={participant.name} />
+                    <AvatarImage src={participant.profileImage} alt={participant.fullName} />
                     <AvatarFallback className="bg-primary/10 text-primary font-medium text-sm">
-                        {getInitials(participant.name)}
+                        {getInitials(participant.fullName)}
                     </AvatarFallback>
                 </Avatar>
                 {participant.isOnline && (
@@ -62,7 +63,7 @@ export function ChatHeader({ participant, onBack, showBackButton = false, classN
             </div>
 
             <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-sm truncate">{participant.name}</h3>
+                <h3 className="font-semibold text-sm truncate">{participant.fullName}</h3>
                 <p className="text-xs text-muted-foreground truncate">
                     {participant.isOnline ? (
                         <span className="text-green-600 dark:text-green-400">En línea</span>
@@ -71,6 +72,17 @@ export function ChatHeader({ participant, onBack, showBackButton = false, classN
                     )}
                 </p>
             </div>
+
+            {/* Connection status indicator */}
+            {isConnected !== undefined && (
+                <div className="shrink-0" title={isConnected ? "Conectado" : "Sin conexión"}>
+                    {isConnected ? (
+                        <Wifi className="size-4 text-green-500" />
+                    ) : (
+                        <WifiOff className="size-4 text-destructive" />
+                    )}
+                </div>
+            )}
 
             <Button variant="ghost" size="icon" className="shrink-0">
                 <MoreVertical className="size-5" />

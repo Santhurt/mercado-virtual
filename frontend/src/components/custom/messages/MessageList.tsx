@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import type { IMessage } from "@/types/ChatTypes";
+import { getSenderId } from "@/types/ChatTypes";
 import { useEffect, useRef } from "react";
 import { MessageBubble } from "./MessageBubble";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -8,6 +9,7 @@ interface MessageListProps {
     messages: IMessage[];
     currentUserId: string;
     isLoading?: boolean;
+    typingUserName?: string | null;
     className?: string;
 }
 
@@ -68,7 +70,20 @@ function MessageSkeleton() {
     );
 }
 
-export function MessageList({ messages, currentUserId, isLoading = false, className }: MessageListProps) {
+function TypingIndicator({ userName }: { userName: string }) {
+    return (
+        <div className="flex items-center gap-2 px-4 py-2">
+            <div className="flex gap-1">
+                <span className="size-2 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                <span className="size-2 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                <span className="size-2 bg-muted-foreground/50 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+            </div>
+            <span className="text-xs text-muted-foreground">{userName} está escribiendo...</span>
+        </div>
+    );
+}
+
+export function MessageList({ messages, currentUserId, isLoading = false, typingUserName, className }: MessageListProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const groupedMessages = groupMessagesByDate(messages);
 
@@ -77,7 +92,7 @@ export function MessageList({ messages, currentUserId, isLoading = false, classN
         if (containerRef.current) {
             containerRef.current.scrollTop = containerRef.current.scrollHeight;
         }
-    }, [messages]);
+    }, [messages, typingUserName]);
 
     if (isLoading) {
         return <MessageSkeleton />;
@@ -112,11 +127,14 @@ export function MessageList({ messages, currentUserId, isLoading = false, classN
                         <MessageBubble
                             key={message._id}
                             message={message}
-                            isOwn={message.senderId === currentUserId}
+                            isOwn={getSenderId(message.senderId) === currentUserId}
                         />
                     ))}
                 </div>
             ))}
+
+            {/* Typing indicator */}
+            {typingUserName && <TypingIndicator userName={typingUserName} />}
         </div>
     );
 }

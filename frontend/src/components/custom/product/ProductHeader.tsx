@@ -23,6 +23,8 @@ import type { IProduct } from "@/types/AppTypes";
 import { useCart } from "@/context/CartContext";
 import { useAuthContext } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { chatService } from "@/services/chats";
+import { useChat } from "@/context/ChatContext";
 
 type ProductHeaderProps = {
     product: IProduct;
@@ -33,9 +35,12 @@ const ProductHeader = ({ product }: ProductHeaderProps) => {
     const [quantity, setQuantity] = useState(1);
     const [addStatus, setAddStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [contactStatus, setContactStatus] = useState<"idle" | "loading" | "error">("idle");
+    const [contactError, setContactError] = useState<string | null>(null);
 
     const { addItem, openCart } = useCart();
-    const { isAuthenticated } = useAuthContext();
+    const { isAuthenticated, user, token } = useAuthContext();
+    const { setActiveChat } = useChat();
     const navigate = useNavigate();
 
     // Get the raw price value (handle both string and number)
@@ -77,6 +82,52 @@ const ProductHeader = ({ product }: ProductHeaderProps) => {
             setAddStatus("error");
             setErrorMessage(err instanceof Error ? err.message : "Error al agregar");
             setTimeout(() => setAddStatus("idle"), 3000);
+        }
+    };
+
+    const handleContactSeller = async () => {
+        // Check authentication
+        if (!isAuthenticated || !user || !token) {
+            navigate("/login");
+            return;
+        }
+
+        // Check if seller exists
+        if (!product.seller?._id) {
+            setContactError("Vendedor no disponible");
+            setContactStatus("error");
+            setTimeout(() => setContactStatus("idle"), 3000);
+            return;
+        }
+
+        // Don't allow contacting yourself
+        if (product.seller._id === user._id) {
+            setContactError("No puedes contactarte a ti mismo");
+            setContactStatus("error");
+            setTimeout(() => setContactStatus("idle"), 3000);
+            return;
+        }
+
+        setContactStatus("loading");
+        setContactError(null);
+
+        try {
+            // Create or get existing chat with seller
+            const response = await chatService.createChat(
+                [user._id, product.seller._id],
+                token
+            );
+
+            // Set the chat as active
+            setActiveChat(response.data._id);
+
+            // Navigate to messages page
+            navigate("/messages");
+        } catch (err) {
+            console.error("Error creating chat:", err);
+            setContactError(err instanceof Error ? err.message : "Error al crear el chat");
+            setContactStatus("error");
+            setTimeout(() => setContactStatus("idle"), 3000);
         }
     };
 
@@ -222,6 +273,14 @@ const ProductHeader = ({ product }: ProductHeaderProps) => {
                             </div>
                         )}
 
+                        {/* Contact Error Message */}
+                        {contactStatus === "error" && contactError && (
+                            <div className="flex items-center gap-2 text-destructive text-sm bg-destructive/10 p-3 rounded-md">
+                                <AlertCircle className="h-4 w-4" />
+                                {contactError}
+                            </div>
+                        )}
+
                         {/* Acciones principales */}
                         <div className="space-y-2 pt-2">
                             <Button
@@ -251,9 +310,20 @@ const ProductHeader = ({ product }: ProductHeaderProps) => {
                                 variant="outline"
                                 className="w-full h-12 text-lg"
                                 size="lg"
+                                onClick={handleContactSeller}
+                                disabled={contactStatus === "loading" || !product.seller?._id}
                             >
-                                <MessageCircle className="h-5 w-5 mr-2" />
-                                Contactar Vendedor
+                                {contactStatus === "loading" ? (
+                                    <>
+                                        <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                                        Conectando...
+                                    </>
+                                ) : (
+                                    <>
+                                        <MessageCircle className="h-5 w-5 mr-2" />
+                                        Contactar Vendedor
+                                    </>
+                                )}
                             </Button>
                         </div>
 

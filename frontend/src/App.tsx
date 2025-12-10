@@ -2,6 +2,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { ThemeProvider } from "./context/theme-provider";
 import { CartProvider } from "./context/CartContext";
 import { AuthProvider } from "./context/AuthContext";
+import { ChatProvider } from "./context/ChatContext";
 import { RouterProvider } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -21,12 +22,14 @@ function App() {
         <QueryClientProvider client={queryClient}>
             <ThemeProvider>
                 <AuthProvider>
-                    <CartProvider>
-                        <SidebarProvider>
-                            <RouterProvider router={router} />
-                            <Toaster />
-                        </SidebarProvider>
-                    </CartProvider>
+                    <ChatProvider>
+                        <CartProvider>
+                            <SidebarProvider>
+                                <RouterProvider router={router} />
+                                <Toaster />
+                            </SidebarProvider>
+                        </CartProvider>
+                    </ChatProvider>
                 </AuthProvider>
             </ThemeProvider>
         </QueryClientProvider>
@@ -34,4 +37,5 @@ function App() {
 }
 
 export default App;
+
 

@@ -40,7 +40,35 @@ function getInitials(name: string): string {
 export function ChatListItem({ chat, currentUserId, isActive = false, onClick }: ChatListItemProps) {
     const otherParticipant = getOtherParticipant(chat.participants, currentUserId);
     const lastMessage = chat.lastMessage;
-    const isOwnMessage = lastMessage?.senderId === currentUserId;
+
+    // Determine if it's the new lastMessage format or IMessage
+    const getMessageContent = (): string => {
+        if (!lastMessage) return "Sin mensajes";
+        if ('text' in lastMessage) return lastMessage.text;
+        return lastMessage.content;
+    };
+
+    const getMessageSenderId = (): string | null => {
+        if (!lastMessage) return null;
+        if ('sender' in lastMessage) return lastMessage.sender;
+        return typeof lastMessage.senderId === 'string' ? lastMessage.senderId : lastMessage.senderId._id;
+    };
+
+    const getMessageTime = (): Date | null => {
+        if (!lastMessage) return null;
+        if ('timestamp' in lastMessage) return new Date(lastMessage.timestamp);
+        return new Date(lastMessage.createdAt);
+    };
+
+    const getMessageStatus = (): string | null => {
+        if (!lastMessage) return null;
+        if ('status' in lastMessage) return lastMessage.status;
+        return null;
+    };
+
+    const isOwnMessage = getMessageSenderId() === currentUserId;
+    const msgStatus = getMessageStatus();
+    const msgTime = getMessageTime();
 
     return (
         <button
@@ -55,9 +83,9 @@ export function ChatListItem({ chat, currentUserId, isActive = false, onClick }:
             {/* Avatar con indicador online */}
             <div className="relative shrink-0">
                 <Avatar className="size-12">
-                    <AvatarImage src={otherParticipant.avatar} alt={otherParticipant.name} />
+                    <AvatarImage src={otherParticipant.profileImage} alt={otherParticipant.fullName} />
                     <AvatarFallback className="bg-primary/10 text-primary font-medium">
-                        {getInitials(otherParticipant.name)}
+                        {getInitials(otherParticipant.fullName)}
                     </AvatarFallback>
                 </Avatar>
                 {otherParticipant.isOnline && (
@@ -69,22 +97,22 @@ export function ChatListItem({ chat, currentUserId, isActive = false, onClick }:
             <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
                     <span className="font-semibold text-sm truncate">
-                        {otherParticipant.name}
+                        {otherParticipant.fullName}
                     </span>
-                    {lastMessage && (
+                    {msgTime && (
                         <span className="text-xs text-muted-foreground shrink-0">
-                            {formatRelativeTime(lastMessage.createdAt)}
+                            {formatRelativeTime(msgTime)}
                         </span>
                     )}
                 </div>
 
                 <div className="flex items-center gap-1.5 mt-0.5">
                     {/* Status icon para mensajes propios */}
-                    {lastMessage && isOwnMessage && (
+                    {isOwnMessage && msgStatus && (
                         <span className="shrink-0">
-                            {lastMessage.status === "seen" ? (
+                            {msgStatus === "seen" ? (
                                 <CheckCheck className="size-4 text-primary" />
-                            ) : lastMessage.status === "delivered" ? (
+                            ) : msgStatus === "delivered" ? (
                                 <CheckCheck className="size-4 text-muted-foreground" />
                             ) : (
                                 <Check className="size-4 text-muted-foreground" />
@@ -93,7 +121,7 @@ export function ChatListItem({ chat, currentUserId, isActive = false, onClick }:
                     )}
 
                     <p className="text-sm text-muted-foreground truncate">
-                        {lastMessage?.content || "Sin mensajes"}
+                        {getMessageContent()}
                     </p>
                 </div>
             </div>
