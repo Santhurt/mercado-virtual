@@ -68,13 +68,16 @@ export const getAllProducts = async (req, res) => {
         if (sellerId) filters.seller = sellerId;
 
         if (categoryId) {
-            return res.status(400).json({
-                success: false,
-                message: "ID de categoria no valido",
-            });
-        }
+            if (!mongoose.Types.ObjectId.isValid(categoryId)) {
+                return res.status(400).json({
+                    success: false,
+                    message:
+                        "El formato del ID de categoría proporcionado no es válido.",
+                });
+            }
 
-        filters.categories = categoryId;
+            filters.categories = categoryId;
+        }
 
         if (minPrice || maxPrice) {
             filters.price = {};

@@ -4,7 +4,7 @@ import mongoose from "mongoose";
 // 1. Crear una nueva Categoría
 export const createCategory = async (req, res) => {
     try {
-        const { name } = req.body;
+        const { name, description } = req.body;
 
         // Validación básica
         if (!name) {
@@ -14,7 +14,7 @@ export const createCategory = async (req, res) => {
         }
 
         // Crear una instancia de la categoría
-        const newCategory = new Category({ name });
+        const newCategory = new Category({ name, description });
 
         // El middleware 'pre("save")' en el modelo generará automáticamente el 'slug'
         await newCategory.save();
@@ -81,7 +81,22 @@ export const getCategoryById = async (req, res) => {
 export const updateCategory = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name } = req.body;
+        const { name, description } = req.body;
+        const updateFields = {};
+        if (name !== undefined) {
+            updateFields.name = name;
+        }
+        if (description !== undefined) {
+            updateFields.description = description;
+        }
+
+        if (Object.keys(updateFields).length === 0) {
+            return res
+                .status(400)
+                .json({
+                    message: "No se proporcionaron campos para actualizar.",
+                });
+        }
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
             return res
@@ -92,8 +107,8 @@ export const updateCategory = async (req, res) => {
         // Buscar y actualizar. 'new: true' devuelve el documento actualizado
         const updatedCategory = await Category.findByIdAndUpdate(
             id,
-            { name },
-            { new: true, runValidators: true }, // runValidators: asegura que se ejecuten las validaciones del esquema (como 'required')
+            updateFields,
+            { new: true, runValidators: true, context: "query" }, // runValidators: asegura que se ejecuten las validaciones del esquema (como 'required')
         );
 
         if (!updatedCategory) {

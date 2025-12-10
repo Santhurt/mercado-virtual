@@ -9,6 +9,11 @@ const categorySchema = new Schema(
             trim: true,
             unique: true, // Asegura que no haya categorías con el mismo nombre
         },
+        description: {
+            type: String,
+            required: false,
+            trim: true,
+        },
         // Un slug para URLs amigables (opcional, pero buena práctica)
         slug: {
             type: String,
