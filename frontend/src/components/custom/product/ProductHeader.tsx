@@ -10,6 +10,7 @@ import {
     Heart,
     Package,
 } from "lucide-react";
+import { useState } from "react";
 import RatingStars from "./RatingStars";
 import ProductQuickInfo from "./ProductQuickInfo";
 import SellerInfoCard from "./SellerInfoCard";
@@ -20,6 +21,7 @@ type ProductHeaderProps = {
 };
 
 const ProductHeader = ({ product }: ProductHeaderProps) => {
+    const [selectedImageIndex, setSelectedImageIndex] = useState(0);
     console.log(product);
     return (
         <Card>
@@ -28,23 +30,39 @@ const ProductHeader = ({ product }: ProductHeaderProps) => {
                     {/* Imagen del Producto y Galería */}
                     <div className="space-y-3 lg:sticky lg:top-6">
                         <div className="aspect-square max-w-full bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg flex items-center justify-center relative overflow-hidden">
-                            <Package className="h-32 w-32 text-blue-300" />
+                            {product.images && product.images.length > 0 ? (
+                                <img
+                                    src={`${import.meta.env.VITE_API_URL}/${product.images[selectedImageIndex]}`}
+                                    alt={product.title}
+                                    className="w-full h-full object-cover"
+                                />
+                            ) : (
+                                <Package className="h-32 w-32 text-blue-300" />
+                            )}
                             {product.discount && (
                                 <Badge className="absolute top-4 right-4 bg-red-500">
-                                    -{product.discount} OFF
+                                    -{product.discount}% OFF
                                 </Badge>
                             )}
                         </div>
-                        <div className="grid grid-cols-4 gap-2">
-                            {[1, 2, 3, 4].map((i) => (
-                                <div
-                                    key={i}
-                                    className="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 rounded-md flex items-center justify-center cursor-pointer hover:ring-2 ring-primary"
-                                >
-                                    <Package className="h-8 w-8 text-gray-400" />
-                                </div>
-                            ))}
-                        </div>
+                        {product.images && product.images.length > 1 && (
+                            <div className="grid grid-cols-4 gap-2">
+                                {product.images.slice(0, 4).map((image, i) => (
+                                    <div
+                                        key={i}
+                                        onClick={() => setSelectedImageIndex(i)}
+                                        className={`aspect-square bg-gradient-to-br from-gray-100 to-gray-200 rounded-md flex items-center justify-center cursor-pointer hover:ring-2 ring-primary overflow-hidden transition-all ${selectedImageIndex === i ? 'ring-2 ring-primary scale-95' : ''
+                                            }`}
+                                    >
+                                        <img
+                                            src={`${import.meta.env.VITE_API_URL}/${image}`}
+                                            alt={`${product.title} - ${i + 1}`}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     {/* Información del Producto */}
