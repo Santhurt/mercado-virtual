@@ -9,41 +9,19 @@ import {
     SheetTitle,
     SheetTrigger,
 } from "@/components/ui/sheet";
-import { Plus, Package, Tags, Percent, ShoppingBag } from "lucide-react";
+import { Plus, Package, Tags, Percent, ShoppingBag, Loader2 } from "lucide-react";
 import ProductManagementCard from "@/components/custom/ProductManagementCard";
 import ProductForm from "@/components/custom/ProductForm";
 import OrdersSection from "@/components/custom/OrdersSection";
+import CategoryManagement from "@/components/custom/CategoryManagement";
 import { useState } from "react";
+import { useProducts } from "@/hooks/useProducts";
+import type { IProduct } from "@/types/AppTypes";
 
 const MerchantDashboardPage = () => {
     const [isSheetOpen, setIsSheetOpen] = useState(false);
-
-    const products = [
-        {
-            id: 1,
-            title: "iPhone 15 Pro Max - Nuevo en caja",
-            price: "$1,299",
-            stock: 5,
-            status: "Activo",
-            image: "https://placehold.co/200",
-        },
-        {
-            id: 2,
-            title: "Lote de ropa de marca - 50 piezas",
-            price: "$2,500",
-            stock: 1,
-            status: "Activo",
-            image: "https://placehold.co/200",
-        },
-        {
-            id: 3,
-            title: "Laptop Gaming RTX 4070",
-            price: "$1,799",
-            stock: 0,
-            status: "Inactivo",
-            image: "https://placehold.co/200",
-        },
-    ];
+    const { data: products = [], isLoading, error } = useProducts();
+    console.log(products);
 
     return (
         <MainLayout>
@@ -73,7 +51,7 @@ const MerchantDashboardPage = () => {
                                     producto.
                                 </SheetDescription>
                             </SheetHeader>
-                            <ProductForm />
+                            <ProductForm onClose={() => setIsSheetOpen(false)} />
                         </SheetContent>
                     </Sheet>
                 </div>
@@ -103,22 +81,37 @@ const MerchantDashboardPage = () => {
                     </TabsContent>
 
                     <TabsContent value="productos" className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {products.map((product) => (
-                                <ProductManagementCard
-                                    key={product.id}
-                                    {...product}
-                                    onEdit={() => setIsSheetOpen(true)}
-                                    onDelete={() => { }}
-                                />
-                            ))}
-                        </div>
+                        {isLoading ? (
+                            <div className="flex justify-center p-8">
+                                <Loader2 className="animate-spin h-8 w-8 text-primary" />
+                            </div>
+                        ) : error ? (
+                            <div className="p-4 rounded-md bg-destructive/10 text-destructive">
+                                Error al cargar los productos.
+                            </div>
+                        ) : products.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center p-8 border border-dashed rounded-lg">
+                                <p className="text-muted-foreground mb-4">No tienes productos registrados aún.</p>
+                                <Button onClick={() => setIsSheetOpen(true)}>Crear Primer Producto</Button>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {products.map((product: IProduct) => (
+                                    <ProductManagementCard
+                                        key={product._id}
+                                        {...product}
+                                        id={product._id} // Adapt id for Component if needed
+                                        image={product.images && product.images.length > 0 ? product.images[0] : "https://placehold.co/200"}
+                                        onEdit={() => setIsSheetOpen(true)} // TODO: Handle edit specific product
+                                        onDelete={() => { }}
+                                    />
+                                ))}
+                            </div>
+                        )}
                     </TabsContent>
 
                     <TabsContent value="categorias">
-                        <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg text-muted-foreground">
-                            Gestión de Categorías (Próximamente)
-                        </div>
+                        <CategoryManagement />
                     </TabsContent>
 
                     <TabsContent value="descuentos">

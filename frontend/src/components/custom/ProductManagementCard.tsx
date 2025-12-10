@@ -8,15 +8,13 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import type { IProduct } from "@/types/AppTypes";
 
-interface ProductManagementCardProps {
-    title: string;
-    price: string;
-    stock: number;
-    status: string;
-    image?: string;
+interface ProductManagementCardProps extends Partial<IProduct> {
+    id: string; // Ensure id is passed explicitly or derived
     onEdit: () => void;
     onDelete: () => void;
+    image?: string; // Optional override or derived from images array
 }
 
 const ProductManagementCard = ({
@@ -24,19 +22,27 @@ const ProductManagementCard = ({
     price,
     stock,
     status,
-    image,
+    images,
     onEdit,
     onDelete,
+    image, // Allow explicit image prop or use first of images
 }: ProductManagementCardProps) => {
+    const displayImage = image || (images && images.length > 0 ? images[0] : undefined);
+
+    const formatCurrency = (amount: number | string | undefined) => {
+        if (amount === undefined) return "$0.00";
+        return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(Number(amount));
+    };
+
     return (
         <Card
             className={'group overflow-hidden flex flex-col transition-all duration-300 hover:shadow-xl hover:border-primary/50 dark:hover:border-primary'}
         >
             {/* Image Section */}
             <div className="aspect-video w-full bg-muted shrink-0 flex items-center justify-center relative overflow-hidden">
-                {image ? (
+                {displayImage ? (
                     <img
-                        src={image}
+                        src={displayImage}
                         alt={title}
                         // Escala más sutil en hover
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-103"
@@ -46,7 +52,7 @@ const ProductManagementCard = ({
                 )}
 
                 {/* Overlay de Agotado */}
-                {stock <= 0 && (
+                {(stock || 0) <= 0 && (
                     <div className="absolute inset-0 bg-background/50 flex items-center justify-center">
                         <span className="text-xl font-bold text-destructive/80 p-2 rounded-lg bg-background/80 backdrop-blur-sm">
                             AGOTADO
@@ -60,7 +66,7 @@ const ProductManagementCard = ({
                         variant="outline" // Usar default para stock positivo
                         className="shadow-md backdrop-blur-md bg-background/90 font-semibold"
                     >
-                        {stock > 0 ? `${stock} en stock` : "Agotado"}
+                        {(stock || 0) > 0 ? `${stock} en stock` : "Agotado"}
                     </Badge>
                 </div>
 
@@ -107,7 +113,6 @@ const ProductManagementCard = ({
                         <Badge variant="outline" className="font-medium text-xs px-2 py-0.5 h-auto">
                             {status}
                         </Badge>
-                        <span className="text-xs">SKU: {Math.random().toString(36).substr(2, 6).toUpperCase()}</span>
                     </div>
                 </div>
 
@@ -115,7 +120,7 @@ const ProductManagementCard = ({
                 <div className="mt-auto pt-3 flex items-center justify-between border-t border-border/70">
                     <div className="flex flex-col">
                         <span className="text-[10px] uppercase text-muted-foreground font-medium tracking-wider">Precio</span>
-                        <p className="font-extrabold text-2xl text-primary">{price}</p> {/* Precio más grande y en color principal */}
+                        <p className="font-extrabold text-2xl text-primary">{formatCurrency(price)}</p> {/* Precio más grande y en color principal */}
                     </div>
                     <Button
                         variant="default"

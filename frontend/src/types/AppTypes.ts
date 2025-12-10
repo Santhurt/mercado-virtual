@@ -16,63 +16,66 @@ export interface IUser {
     profileImage?: string | null;
 }
 
+export interface ICategory {
+    _id: string;
+    name: string;
+    description?: string;
+    image?: string;
+    createdAt?: Date;
+    updatedAt?: Date;
+}
+
+export interface ISellerProfile {
+    _id: string;
+    user: IUser;
+    businessName: string;
+    accountStatus: string;
+}
+
 export interface IProduct {
+    _id: string;
     title: string;
-    price: string;
-    originalPrice?: string; // Opcional, ya que tiene un condicional
-    discount?: string; // Opcional
+    price: number;
     status: string;
     rating: number;
     reviewCount: number;
     description: string;
     features: string[];
-    specifications: Record<string, string>; // Un objeto con claves string y valores string
+    specifications: Record<string, string>;
     tags: string[];
     stock: number;
-    seller: ISellerInfo; // Se refiere a la interfaz del vendedor
-}
-export interface ISellerInfo {
-    name: string;
-    username: string;
-    rating: number;
-    sales: number;
-    location: string;
-    verified: boolean;
-}
-export interface IComment {
-    id: number;
-    user: string;
-    username: string;
-    avatar: string; // Para el texto de fallback del avatar (ej: "MG")
-    rating: number;
-    comment: string;
-    date: string;
+    images: string[];
+    seller?: ISellerProfile;
+    categories: ICategory[] | string[]; // Can be IDs during creation or Objects after population
+    createdAt: Date;
+    updatedAt: Date;
+    originalPrice?: number | string;
+    discount?: number | string;
 }
 
-// Para las rutas
-export interface MenuItem {
-    id: string;
-    label: string;
-    icon: React.ComponentType;
-    to: string;
-    badge?: number;
-}
-export interface IUserProfile {
+// Payloads
+export interface ICreateCategoryPayload {
     name: string;
-    username: string;
-    bio: string;
-    location: string;
-    joinDate: string; // Asumimos string formateado
-    rating: number;
-    badges: string[];
-    stats: {
-        productos: number;
-        ventas: number;
-        seguidores: number;
-        siguiendo: number;
-    };
-    // avatarUrl?: string; // Si hubiera imagen, se agregaría aquí
+    description?: string;
+    image?: string;
 }
+
+export interface IUpdateCategoryPayload extends Partial<ICreateCategoryPayload> { }
+
+export interface ICreateProductPayload {
+    title: string;
+    price: number;
+    status: string;
+    description: string;
+    features: string[];
+    specifications: Record<string, string>;
+    tags: string[];
+    stock: number;
+    categories: string[]; // IDs
+    images?: string[];
+}
+
+export interface IUpdateProductPayload extends Partial<ICreateProductPayload> { }
 
 // ===== ORDER TYPES =====
 
