@@ -8,6 +8,7 @@ import MessagesPage from "@/pages/MessagesPage";
 import AccountSettingsPage from "@/pages/AccountSettingsPage";
 import LoginPage from "@/pages/LoginPage";
 import RegisterPage from "@/pages/RegisterPage";
+import MyOrdersPage from "@/pages/MyOrdersPage";
 import { createBrowserRouter } from "react-router-dom";
 
 
@@ -47,6 +48,10 @@ const router = createBrowserRouter([
     {
         path: "/register",
         element: <RegisterPage />
+    },
+    {
+        path: "/my-orders",
+        element: <MyOrdersPage />
     },
     {
         path: "*",

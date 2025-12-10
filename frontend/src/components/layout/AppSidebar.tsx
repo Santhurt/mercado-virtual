@@ -9,6 +9,7 @@ import {
     Settings,
     User,
     LogOut,
+    ClipboardList,
 } from "lucide-react";
 import {
     Sidebar,
@@ -70,6 +71,11 @@ const AppSidebar = ({ activeItem, setActiveItem }: Props) => {
     const secondaryMenu: MenuItem[] = [
         { id: "carrito", label: "Mi Carrito", icon: ShoppingCart, to: "#" },
     ];
+
+    // Add "Mis Órdenes" for authenticated users
+    if (isAuthenticated) {
+        secondaryMenu.push({ id: "ordenes", label: "Mis Órdenes", icon: ClipboardList, to: "/my-orders" });
+    }
 
     // Only show "Mi Tienda" if user is seller or admin
     const isSeller = user?.role === "seller" || user?.role === "admin";
