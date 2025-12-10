@@ -93,15 +93,27 @@ const ProductHeader = ({ product }: ProductHeaderProps) => {
         }
 
         // Check if seller exists
-        if (!product.seller?._id) {
+        if (!product.seller) {
             setContactError("Vendedor no disponible");
             setContactStatus("error");
             setTimeout(() => setContactStatus("idle"), 3000);
             return;
         }
 
+        // Extract seller user ID (can be populated object or string ID)
+        const sellerUserId = typeof product.seller.user === 'string'
+            ? product.seller.user
+            : product.seller.user?._id;
+
+        if (!sellerUserId) {
+            setContactError("Información del vendedor incompleta");
+            setContactStatus("error");
+            setTimeout(() => setContactStatus("idle"), 3000);
+            return;
+        }
+
         // Don't allow contacting yourself
-        if (product.seller._id === user._id) {
+        if (sellerUserId === user._id) {
             setContactError("No puedes contactarte a ti mismo");
             setContactStatus("error");
             setTimeout(() => setContactStatus("idle"), 3000);
@@ -112,9 +124,15 @@ const ProductHeader = ({ product }: ProductHeaderProps) => {
         setContactError(null);
 
         try {
+            // Debug: Log the IDs being sent
+            console.log("Creating chat with participants:", {
+                currentUser: user._id,
+                sellerUser: sellerUserId,
+            });
+
             // Create or get existing chat with seller
             const response = await chatService.createChat(
-                [user._id, product.seller._id],
+                [user._id, sellerUserId],
                 token
             );
 
@@ -311,7 +329,7 @@ const ProductHeader = ({ product }: ProductHeaderProps) => {
                                 className="w-full h-12 text-lg"
                                 size="lg"
                                 onClick={handleContactSeller}
-                                disabled={contactStatus === "loading" || !product.seller?._id}
+                                disabled={contactStatus === "loading" || !product.seller?.user}
                             >
                                 {contactStatus === "loading" ? (
                                     <>

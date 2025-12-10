@@ -97,7 +97,8 @@ export default function MessagesPage() {
         };
 
         loadChats();
-    }, [isAuthenticated, token, user?._id, setChats, transformChat]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isAuthenticated, token, user?._id]);
 
     // Load messages when active chat changes
     useEffect(() => {
@@ -135,7 +136,8 @@ export default function MessagesPage() {
         };
 
         loadMessages();
-    }, [activeChat, token, joinChat, leaveChat, messages, setMessages, transformMessage]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeChat, token]);
 
     // Mark messages as seen when viewing
     useEffect(() => {

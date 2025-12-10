@@ -27,7 +27,7 @@ export interface ICategory {
 
 export interface ISellerProfile {
     _id: string;
-    user: IUser;
+    user: string | IUser; // Can be ID or populated object
     businessName: string;
     description?: string;
     logo?: string;
