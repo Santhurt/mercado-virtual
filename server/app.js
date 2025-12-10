@@ -1,4 +1,5 @@
 import express from "express";
+import http from "http";
 import cors from "cors";
 import { config } from "dotenv";
 import mongodbConn from "./src/config/mongo.js";
@@ -12,10 +13,12 @@ import orderRoutes from "./src/routes/orderRoutes.js";
 import cartRoutes from "./src/routes/cartRoutes.js";
 import reviewRoutes from "./src/routes/reviewRoutes.js";
 import categoryRoutes from "./src/routes/categoryRoutes.js";
+import { initSocketServer } from "./src/config/socket.js";
 
 config();
 
 const app = express();
+const server = http.createServer(app);
 
 app.use(express.json());
 app.use(cors());
@@ -40,9 +43,13 @@ app.use("/api/categories", categoryRoutes);
 const PORT = process.env.PORT || 3000;
 
 if (process.env.NODE_ENV !== "test") {
-    app.listen(PORT, () => {
+    // Inicializar Socket.io
+    initSocketServer(server);
+
+    server.listen(PORT, () => {
         console.log("Listening on port: " + PORT);
     });
 }
 
 export default app;
+export { server };
