@@ -4,8 +4,19 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import {
     Package,
     MapPin,
@@ -14,14 +25,20 @@ import {
     Store,
     Calendar,
     Hash,
+    XCircle,
 } from "lucide-react";
 import OrderStatusBadge from "../OrderStatusBadge";
 import type { IOrder, IOrderProduct } from "@/types/AppTypes";
+import { useState } from "react";
+import { useAuthContext } from "@/context/AuthContext";
+import { orderService } from "@/services/orders";
+import { useToast } from "@/components/ui/use-toast";
 
 interface OrderProductsModalProps {
     order: IOrder | null;
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    onOrderUpdated?: () => void;
 }
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -62,6 +79,14 @@ const getPaymentMethodLabel = (method: string): string => {
 };
 
 const ProductItem = ({ product }: { product: IOrderProduct }) => {
+    // Handle seller - can be string (ID) or populated object
+    const getSellerName = (seller: any): string => {
+        if (!seller) return "No disponible";
+        if (typeof seller === "string") return seller;
+        if (typeof seller === "object" && seller.businessName) return seller.businessName;
+        return "No disponible";
+    };
+
     return (
         <div className="flex gap-4 p-3 rounded-lg bg-muted/30 border border-border/50 hover:bg-muted/50 transition-colors">
             <div className="h-20 w-20 rounded-lg overflow-hidden bg-muted flex-shrink-0 flex items-center justify-center border border-border/50">
@@ -81,7 +106,7 @@ const ProductItem = ({ product }: { product: IOrderProduct }) => {
                 </h4>
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
                     <Store className="h-3 w-3" />
-                    <span>Vendedor: {product.seller || "No disponible"}</span>
+                    <span>Vendedor: {getSellerName(product.seller)}</span>
                 </div>
                 <div className="flex items-center justify-between mt-2">
                     <div className="flex items-center gap-2 text-sm">
@@ -101,8 +126,46 @@ const ProductItem = ({ product }: { product: IOrderProduct }) => {
     );
 };
 
-const OrderProductsModal = ({ order, open, onOpenChange }: OrderProductsModalProps) => {
+const OrderProductsModal = ({ order, open, onOpenChange, onOrderUpdated }: OrderProductsModalProps) => {
+    const { user, token } = useAuthContext();
+    const { toast } = useToast();
+    const [showCancelDialog, setShowCancelDialog] = useState(false);
+    const [isCancelling, setIsCancelling] = useState(false);
+
     if (!order) return null;
+
+    const canBeCancelled = order.status === "pending" || order.status === "processing";
+
+    const handleCancelOrder = async () => {
+        if (!token || !user) {
+            toast({
+                title: "Error",
+                description: "Debes estar autenticado para cancelar una orden",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        setIsCancelling(true);
+        try {
+            await orderService.updateOrderStatus(order._id, "cancelled", user._id, token);
+            toast({
+                title: "Orden cancelada",
+                description: "Tu orden ha sido cancelada exitosamente",
+            });
+            setShowCancelDialog(false);
+            onOpenChange(false);
+            onOrderUpdated?.();
+        } catch (error) {
+            toast({
+                title: "Error al cancelar",
+                description: error instanceof Error ? error.message : "No se pudo cancelar la orden",
+                variant: "destructive",
+            });
+        } finally {
+            setIsCancelling(false);
+        }
+    };
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -216,7 +279,46 @@ const OrderProductsModal = ({ order, open, onOpenChange }: OrderProductsModalPro
                         </div>
                     </div>
                 </div>
+
+                {/* Footer with Cancel Button */}
+                {canBeCancelled && (
+                    <div className="flex-shrink-0 border-t pt-4 px-6 pb-2">
+                        <Button
+                            variant="destructive"
+                            className="w-full gap-2"
+                            onClick={() => setShowCancelDialog(true)}
+                        >
+                            <XCircle className="h-4 w-4" />
+                            Cancelar Orden
+                        </Button>
+                    </div>
+                )}
             </DialogContent>
+
+            {/* Cancel Confirmation Dialog */}
+            <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>¿Cancelar esta orden?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Esta acción no se puede deshacer. La orden #{order._id.slice(-8).toUpperCase()}
+                            será marcada como cancelada y no podrás reactivarla.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isCancelling}>
+                            No, mantener orden
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleCancelOrder}
+                            disabled={isCancelling}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                            {isCancelling ? "Cancelando..." : "Sí, cancelar orden"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </Dialog>
     );
 };

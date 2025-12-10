@@ -88,6 +88,18 @@ const MyOrdersPage = () => {
         setIsModalOpen(true);
     };
 
+    const handleOrderUpdated = async () => {
+        // Refetch orders after cancellation
+        if (!user || !token) return;
+
+        try {
+            const data = await orderService.getOrdersByUser(user._id, token);
+            setOrders(data);
+        } catch (err) {
+            console.error("Error refetching orders:", err);
+        }
+    };
+
     // If not authenticated
     if (!isAuthenticated) {
         return (
@@ -208,6 +220,7 @@ const MyOrdersPage = () => {
                     order={selectedOrder}
                     open={isModalOpen}
                     onOpenChange={setIsModalOpen}
+                    onOrderUpdated={handleOrderUpdated}
                 />
             </div>
         </MainLayout>
