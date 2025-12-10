@@ -14,6 +14,7 @@ interface AuthContextType {
     isLoading: boolean;
     login: (user: IUser, token: string) => void;
     logout: () => void;
+    updateUser: (user: IUser) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -62,6 +63,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem(AUTH_STORAGE_KEY);
     };
 
+    const updateUser = (updatedUser: IUser) => {
+        setUser(updatedUser);
+        if (token) {
+            localStorage.setItem(
+                AUTH_STORAGE_KEY,
+                JSON.stringify({ user: updatedUser, token })
+            );
+        }
+    };
+
     return (
         <AuthContext.Provider
             value={{
@@ -71,6 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 isLoading,
                 login,
                 logout,
+                updateUser,
             }}
         >
             {children}
@@ -85,3 +97,4 @@ export function useAuthContext() {
     }
     return context;
 }
+

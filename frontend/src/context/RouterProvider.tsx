@@ -14,6 +14,10 @@ import { createBrowserRouter } from "react-router-dom";
 const router = createBrowserRouter([
     {
         path: "/",
+        element: <LoginPage />
+    },
+    {
+        path: "/home",
         element: <FeedPage />,
     },
     {
@@ -39,10 +43,6 @@ const router = createBrowserRouter([
     {
         path: "/settings",
         element: <AccountSettingsPage />
-    },
-    {
-        path: "/login",
-        element: <LoginPage />
     },
     {
         path: "/register",

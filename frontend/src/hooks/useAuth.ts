@@ -12,7 +12,7 @@ export function useLogin() {
         mutationFn: (payload: ILoginPayload) => authService.login(payload),
         onSuccess: (response) => {
             login(response.data.user, response.data.token);
-            navigate("/");
+            navigate("/home");
         },
     });
 }
@@ -25,7 +25,7 @@ export function useRegister() {
         mutationFn: (payload: IRegisterPayload) => authService.register(payload),
         onSuccess: (response) => {
             login(response.data.user, response.data.token);
-            navigate("/");
+            navigate("/home");
         },
     });
 }
@@ -36,6 +36,6 @@ export function useLogout() {
 
     return () => {
         logout();
-        navigate("/login");
+        navigate("/");
     };
 }

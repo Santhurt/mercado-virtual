@@ -32,6 +32,24 @@ export interface ISellerProfile {
     accountStatus: string;
 }
 
+export type SellerAccountStatus = "aprobado" | "no_aprobado" | "activo" | "no_activo";
+
+export interface ISeller {
+    _id: string;
+    user: string | IUser;
+    businessName: string;
+    description: string;
+    accountStatus: SellerAccountStatus;
+    products: string[];
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface ICreateSellerPayload {
+    businessName: string;
+    description?: string;
+}
+
 export interface IProduct {
     _id: string;
     title: string;

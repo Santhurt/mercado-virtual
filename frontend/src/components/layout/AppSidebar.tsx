@@ -8,6 +8,7 @@ import {
     ChevronDown,
     Settings,
     User,
+    LogOut,
 } from "lucide-react";
 import {
     Sidebar,
@@ -33,6 +34,8 @@ import type React from "react";
 import { Link } from "react-router-dom";
 import type { MenuItem } from "@/types/AppTypes";
 import { useCart } from "../../context/CartContext";
+import { useAuthContext } from "@/context/AuthContext";
+import { useLogout } from "@/hooks/useAuth";
 
 type Props = {
     activeItem: string;
@@ -41,6 +44,8 @@ type Props = {
 
 const AppSidebar = ({ activeItem, setActiveItem }: Props) => {
     const { toggleCart } = useCart();
+    const { user, isAuthenticated } = useAuthContext();
+    const logout = useLogout();
 
     const mainMenu: MenuItem[] = [
         { id: "home", label: "Inicio", icon: Home, to: "/" },
@@ -61,10 +66,16 @@ const AppSidebar = ({ activeItem, setActiveItem }: Props) => {
         },
     ];
 
+    // Build secondary menu based on user role
     const secondaryMenu: MenuItem[] = [
         { id: "carrito", label: "Mi Carrito", icon: ShoppingCart, to: "#" },
-        { id: "tienda", label: "Mi Tienda", icon: Store, to: "/dashboard" },
     ];
+
+    // Only show "Mi Tienda" if user is seller or admin
+    const isSeller = user?.role === "seller" || user?.role === "admin";
+    if (isSeller) {
+        secondaryMenu.push({ id: "tienda", label: "Mi Tienda", icon: Store, to: "/dashboard" });
+    }
 
     const handleItemClick = (e: React.MouseEvent, item: MenuItem) => {
         if (item.id === "carrito") {
@@ -73,6 +84,13 @@ const AppSidebar = ({ activeItem, setActiveItem }: Props) => {
         }
         setActiveItem(item.id);
     };
+
+    const handleLogout = () => {
+        logout();
+    };
+
+    // Get display name for user
+    const displayName = user?.fullName || "Usuario";
 
     return (
         <Sidebar collapsible="icon">
@@ -188,7 +206,7 @@ const AppSidebar = ({ activeItem, setActiveItem }: Props) => {
                                 <SidebarMenuButton>
                                     <User />
                                     <span className="truncate">
-                                        Usuario Demo
+                                        {isAuthenticated ? displayName : "Iniciar sesión"}
                                     </span>
                                     <ChevronDown className="ml-auto" />
                                 </SidebarMenuButton>
@@ -197,22 +215,34 @@ const AppSidebar = ({ activeItem, setActiveItem }: Props) => {
                                 side="top"
                                 className="w-[--radix-popper-anchor-width]"
                             >
-                                <DropdownMenuItem asChild>
-                                    <Link to="/profile">
-                                        <User className="mr-2 h-4 w-4" />
-                                        <span>Perfil</span>
-                                    </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                    <Link to="/settings">
-                                        <Settings className="mr-2 h-4 w-4" />
-                                        <span>Configuración</span>
-                                    </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem>
-                                    <span>Cerrar sesión</span>
-                                </DropdownMenuItem>
+                                {isAuthenticated ? (
+                                    <>
+                                        <DropdownMenuItem asChild>
+                                            <Link to="/profile">
+                                                <User className="mr-2 h-4 w-4" />
+                                                <span>Perfil</span>
+                                            </Link>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem asChild>
+                                            <Link to="/settings">
+                                                <Settings className="mr-2 h-4 w-4" />
+                                                <span>Configuración</span>
+                                            </Link>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onClick={handleLogout}>
+                                            <LogOut className="mr-2 h-4 w-4" />
+                                            <span>Cerrar sesión</span>
+                                        </DropdownMenuItem>
+                                    </>
+                                ) : (
+                                    <DropdownMenuItem asChild>
+                                        <Link to="/login">
+                                            <User className="mr-2 h-4 w-4" />
+                                            <span>Iniciar sesión</span>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                )}
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </SidebarMenuItem>

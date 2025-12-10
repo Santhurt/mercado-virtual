@@ -6,41 +6,56 @@ import { useState } from "react";
 import ProfileInfoForm from "@/components/custom/settings/ProfileInfoForm";
 import RoleUpgradeCard from "@/components/custom/settings/RoleUpgradeCard";
 import DeleteAccountDialog from "@/components/custom/settings/DeleteAccountDialog";
+import { useAuthContext } from "@/context/AuthContext";
+import { useUpdateUser } from "@/hooks/useRole";
 import type { IUser } from "@/types/AppTypes";
-
-// Mock user data - En producción vendría del contexto/API
-const mockUser: IUser = {
-    _id: "1",
-    fullName: "Juan Pérez García",
-    email: "juan.perez@email.com",
-    documentNumber: "1234567890",
-    age: 28,
-    phone: "+57 312 456 7890",
-    registrationDate: new Date("2024-03-15"),
-    role: "customer",
-    profileImage: null,
-};
 
 const AccountSettingsPage = () => {
     const [activeTab, setActiveTab] = useState("general");
-    const [user, setUser] = useState<IUser>(mockUser);
+    const { user, isLoading } = useAuthContext();
+    const updateUserMutation = useUpdateUser();
 
-    const handleSaveProfile = (updatedData: Partial<IUser>) => {
-        setUser((prev) => ({ ...prev, ...updatedData }));
-        // Aquí iría la llamada al API para guardar
-        console.log("Profile saved:", updatedData);
-    };
-
-    const handleUpgradeRole = () => {
-        setUser((prev) => ({ ...prev, role: "seller" }));
-        // Aquí iría la llamada al API para upgrade
-        console.log("Role upgraded to seller");
+    const handleSaveProfile = async (updatedData: Partial<IUser>) => {
+        try {
+            await updateUserMutation.mutateAsync({
+                fullName: updatedData.fullName,
+                email: updatedData.email,
+                documentNumber: updatedData.documentNumber,
+                age: updatedData.age,
+                phone: updatedData.phone,
+            });
+        } catch (error) {
+            console.error("Error saving profile:", error);
+            throw error; // Re-throw to let the form handle it
+        }
     };
 
     const handleDeleteAccount = () => {
         // Aquí iría la llamada al API para eliminar
         console.log("Account deleted");
     };
+
+    if (isLoading) {
+        return (
+            <MainLayout>
+                <div className="flex items-center justify-center h-64">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+            </MainLayout>
+        );
+    }
+
+    if (!user) {
+        return (
+            <MainLayout>
+                <div className="text-center py-12">
+                    <p className="text-muted-foreground">
+                        Debes iniciar sesión para acceder a la configuración.
+                    </p>
+                </div>
+            </MainLayout>
+        );
+    }
 
     return (
         <MainLayout>
@@ -99,10 +114,7 @@ const AccountSettingsPage = () => {
                     </TabsContent>
 
                     <TabsContent value="role" className="mt-6">
-                        <RoleUpgradeCard
-                            currentRole={user.role}
-                            onUpgrade={handleUpgradeRole}
-                        />
+                        <RoleUpgradeCard currentRole={user.role} />
                     </TabsContent>
 
                     <TabsContent value="danger" className="mt-6">
